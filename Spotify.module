@@ -1,7 +1,7 @@
 #!name=Spotify 解锁 Premium & 去广告（iOS / iPadOS / macOS）
 #!desc=改写 UCS 账户属性以部分解锁 Premium 并去除广告；已针对 macOS 桌面端补全广告与归因域名拦截。macOS 首次启用后需完全退出并清理缓存。
 #!author=surge-modules
-#!homepage=https://github.com/app2smile/rules
+#!homepage=https://github.com/YuXilong/surge-modules
 
 # ===========================================================================
 # 原理与 macOS 适配说明
@@ -67,11 +67,15 @@ DOMAIN,ads-fa.spotify.com,REJECT
 # DOMAIN,crashdump.spotify.com,REJECT
 
 [Script]
+# 脚本走 jsDelivr 镜像（国内比 raw.githubusercontent.com 稳定）。
+# 若 jsDelivr 不可达，把 fastly.jsdelivr.net/gh/app2smile/rules@master 换回
+# raw.githubusercontent.com/app2smile/rules/master 即可。
+#
 # artist / album 列表解锁：把移动端 platform 参数改写为 ipad。
 # iOS 专用；macOS 不会命中该路径，无副作用。
-spotify-json = type=http-request,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(artistview\/v1\/artist|album-entity-view\/v2\/album)\/,requires-body=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-json.js
+spotify-json = type=http-request,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(artistview\/v1\/artist|album-entity-view\/v2\/album)\/,requires-body=0,script-path=https://fastly.jsdelivr.net/gh/app2smile/rules@master/js/spotify-json.js
 # UCS 账户属性改写：iOS(bootstrap + customize) 与 macOS(customize) 共用同一分支。
-spotify-proto = type=http-response,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-proto.js,script-update-interval=0
+spotify-proto = type=http-response,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=https://fastly.jsdelivr.net/gh/app2smile/rules@master/js/spotify-proto.js,script-update-interval=0
 
 [MITM]
 hostname = %APPEND% spclient.wg.spotify.com, *spclient.spotify.com

@@ -101,14 +101,17 @@ https://sponsored-recommendations.spotify.com/desktop   # iframe，播放列表�
 4. **补充生效前提**：给出 `scripts/reset-spotify-mac-state.sh`，解决「模块装了但 Mac 上没效果」这个最常见的坑（见下）。
 5. **修正描述**：模块名与 desc 反映真实的平台覆盖范围。
 
-> 我**没有**去改动 `spotify-proto.js` 的改写逻辑并自行托管，因为实测属性集已覆盖桌面端所需字段，而重写一份 71KB 的 protobuf 脚本只会引入维护负担。脚本仍指向上游 app2smile/rules。
+6. **脚本改走 jsDelivr 镜像**：`script-path` 从 `raw.githubusercontent.com` 换为 `fastly.jsdelivr.net`，避免国内拉取 GitHub raw 不稳定导致脚本加载失败。
+
+> 我**没有**去改动 `spotify-proto.js` 的改写逻辑并自行托管，因为实测属性集已覆盖桌面端所需字段，而重写一份 71KB 的 protobuf 脚本只会引入维护负担。脚本仍指向上游 app2smile/rules，只是换了 CDN。
 
 ## 安装
 
 Surge → 首页 → 模块 → 从 URL 安装，或直接把 `Spotify.module` 放到配置里 `#!include`。
 
-> 模块里的 `script-path` 指向 `raw.githubusercontent.com`。若你的网络拉取 GitHub raw 不稳定，可换成 jsDelivr 镜像：
-> `https://fastly.jsdelivr.net/gh/app2smile/rules@master/js/spotify-proto.js`
+> 模块里的 `script-path` 默认走 jsDelivr：`https://fastly.jsdelivr.net/gh/app2smile/rules@master/js/...`。
+> 若 jsDelivr 不可达，把 `fastly.jsdelivr.net/gh/app2smile/rules@master` 换回 `raw.githubusercontent.com/app2smile/rules/master`。
+> 两个脚本地址也可自行验证：`curl -sI <script-path>` 应返回 `200`。
 
 ## macOS 生效步骤（重要）
 
