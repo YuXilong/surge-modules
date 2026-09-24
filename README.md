@@ -7,7 +7,17 @@
 | 文件 | 说明 |
 | --- | --- |
 | `Spotify.module` | 完善后的 Surge 模块，iOS / iPadOS / macOS 通用 |
+| `js/spotify-proto.js`<br>`js/spotify-json.js` | **已 vendor 的上游脚本**，运行时从本仓库加载，不再依赖上游 |
+| `js/NOTICE.md` | 脚本来源、锁定的上游 commit、sha256 与供应链检查记录 |
 | `scripts/reset-spotify-mac-state.sh` | macOS 一键清理 Spotify 产品状态缓存（模块生效的前提） |
+| `scripts/update-upstream-scripts.sh` | 主动跟进上游脚本更新（平时不用跑） |
+
+### 为什么不直接引用上游
+
+原先 `script-path` 指向 `raw.githubusercontent.com/app2smile/rules/...`，一旦上游删库、改名或改分支，
+模块就会静默失效。现在两个脚本已复制进 `js/`，模块指向本仓库，**上游删库也不影响使用**。
+
+上游是 MIT 许可（Copyright (c) 2023 app2smile），复制时已保留版权声明，详见 [js/NOTICE.md](js/NOTICE.md)。
 
 ## 原模块做了什么
 
@@ -101,17 +111,22 @@ https://sponsored-recommendations.spotify.com/desktop   # iframe，播放列表�
 4. **补充生效前提**：给出 `scripts/reset-spotify-mac-state.sh`，解决「模块装了但 Mac 上没效果」这个最常见的坑（见下）。
 5. **修正描述**：模块名与 desc 反映真实的平台覆盖范围。
 
-6. **脚本改走 jsDelivr 镜像**：`script-path` 从 `raw.githubusercontent.com` 换为 `fastly.jsdelivr.net`，避免国内拉取 GitHub raw 不稳定导致脚本加载失败。
+6. **脚本 vendor 进本仓库**：`script-path` 改为指向本仓库的 `js/`，运行时不再依赖上游，上游删库也不会失效；同时走 jsDelivr，兼顾国内可达性。来源、锁定的 commit 与 sha256 记录在 [js/NOTICE.md](js/NOTICE.md)。
 
-> 我**没有**去改动 `spotify-proto.js` 的改写逻辑并自行托管，因为实测属性集已覆盖桌面端所需字段，而重写一份 71KB 的 protobuf 脚本只会引入维护负担。脚本仍指向上游 app2smile/rules，只是换了 CDN。
+> 我**没有**去改动 `spotify-proto.js` 的改写逻辑，因为实测属性集已覆盖桌面端所需字段，而重写一份 71KB 的 protobuf 脚本只会引入维护负担。脚本保持上游原样，只是从「运行时拉取」改为「复制进仓库 + 可主动同步」。
 
 ## 安装
 
-Surge → 首页 → 模块 → 从 URL 安装，或直接把 `Spotify.module` 放到配置里 `#!include`。
+Surge → 首页 → 模块 → 从 URL 安装：
 
-> 模块里的 `script-path` 默认走 jsDelivr：`https://fastly.jsdelivr.net/gh/app2smile/rules@master/js/...`。
-> 若 jsDelivr 不可达，把 `fastly.jsdelivr.net/gh/app2smile/rules@master` 换回 `raw.githubusercontent.com/app2smile/rules/master`。
-> 两个脚本地址也可自行验证：`curl -sI <script-path>` 应返回 `200`。
+```
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module
+```
+
+> 模块里的两个 `script-path` 指向本仓库：`https://fastly.jsdelivr.net/gh/YuXilong/surge-modules@main/js/...`
+> 若 jsDelivr 不可达，把 `fastly.jsdelivr.net/gh/YuXilong/surge-modules@main` 换成
+> `raw.githubusercontent.com/YuXilong/surge-modules/main` 即可（内容相同）。
+> 可自行验证：`curl -sI <script-path>` 应返回 `200`。
 
 ## macOS 生效步骤（重要）
 
@@ -191,12 +206,13 @@ PY
 
 本仓库自身的配置与脚本以 [MIT](LICENSE) 发布。
 
-模块运行时引用的两个 JS 脚本**不**属于本仓库，仍在运行时从上游拉取，版权归其作者所有：
+`js/` 下的两个 JS 脚本**版权不属于本仓库**，是从上游复制进来的（vendor），遵循其 MIT 许可并保留版权声明：
 
-- [app2smile/rules](https://github.com/app2smile/rules) — `js/spotify-proto.js`、`js/spotify-json.js`
+- [app2smile/rules](https://github.com/app2smile/rules) — MIT License, Copyright (c) 2023 app2smile
+  完整声明见 [js/LICENSE-app2smile.md](js/LICENSE-app2smile.md)，来源与版本见 [js/NOTICE.md](js/NOTICE.md)
 - 模块原始版本来自 [yfamilys.com/module/spotifyVIP.module](https://yfamilys.com/module/spotifyVIP.module)
 
-本仓库仅做 macOS 适配补强（广告面拦截、生效流程、文档与复位脚本），并已在上文逐条标注哪些结论来自本地实证、哪些来自社区黑名单。
+本仓库仅做 macOS 适配补强（广告面拦截、生效流程、文档与复位脚本）与脚本 vendor，并已在上文逐条标注哪些结论来自本地实证、哪些来自社区黑名单。
 
 ## 免责声明
 
