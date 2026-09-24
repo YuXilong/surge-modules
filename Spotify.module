@@ -1,0 +1,77 @@
+#!name=Spotify 解锁 Premium & 去广告（iOS / iPadOS / macOS）
+#!desc=改写 UCS 账户属性以部分解锁 Premium 并去除广告；已针对 macOS 桌面端补全广告与归因域名拦截。macOS 首次启用后需完全退出并清理缓存。
+#!author=surge-modules
+#!homepage=https://github.com/app2smile/rules
+
+# ===========================================================================
+# 原理与 macOS 适配说明
+# 以下结论基于本机 Spotify for macOS 1.3.1.234 (g59d6bf59) 的二进制与
+# Resources/Apps/xpui.spa 实测得出。
+#
+# 1) 核心解锁：MITM spclient，改写 UCS (user-customization-service) 响应里的
+#    账户属性（type / catalogue / player-license / ads / high-bitrate /
+#    unrestricted / name / financial-product ...）为 premium。
+#      · iOS / iPadOS : bootstrap/v1/bootstrap + user-customization-service/v1/customize
+#      · macOS        : 仅 user-customization-service/v1/customize
+#                       （桌面端二进制中不存在 bootstrap/v1/bootstrap 调用）
+#    两端共用同一套下发结构 spotify.remote_config.ucs.proto.UcsResponseWrapper，
+#    且桌面端消费的属性名与 iOS 一致，因此同一份改写脚本对桌面端同样有效。
+#
+# 2) 为什么桌面端不能靠“拦广告 URL”：
+#    macOS 客户端的广告服务器地址是运行时动态下发的
+#    （spotify.ads.esperanto.proto.UpdateAdServerEndpointRequest），
+#    二进制里不存在任何固定的广告域名或广告路由（既无 ad-formation 也无 ads-fa），
+#    所以无法按固定 URL 规则拦截广告请求。
+#    => 必须依赖上面的 UCS 解锁，让客户端根本不进入广告流程。
+#
+# 3) 本模块相对原模块额外补强的桌面端拦截（二级保险）：
+#    · sponsored-recommendations.spotify.com 桌面端专有“赞助推荐”内嵌页
+#      （在 xpui.spa 中实测到 iframe src=https://sponsored-recommendations.spotify.com/desktop）
+#    · adeventtracker.spotify.com / ads-fa.spotify.com
+#      Spotify legacy 广告投放与事件上报端点，来自社区广告黑名单；
+#      在 1.3.1.234 二进制中未出现，保留作为旧版本的兜底拦截。
+#
+# 4) 生效前提（很重要）：
+#    macOS 会把产品状态持久化到
+#    ~/Library/Application Support/Spotify/PersistentCache/offline.bnk，
+#    该缓存里能看到 <ads>1</ads> / <catalogue>free</catalogue> 等旧值。
+#    必须完全退出 Spotify 并清理缓存（或重新登录）后才会重新拉取 UCS。
+#    可直接运行 scripts/reset-spotify-mac-state.sh 一键完成。
+# ===========================================================================
+
+[Header Rewrite]
+# 关闭协商缓存：否则 UCS 命中 if-none-match 直接返回 304，
+# 脚本在 http-response 阶段拿不到响应体，改写静默失效。
+http-request ^https:\/\/spclient\.wg\.spotify\.com\/user-customization-service\/v1\/customize$ header-del if-none-match
+
+[Rule]
+# ---- Spotify 广告与归因端点（精确匹配，避免误伤播放/图片 CDN） ----
+# sponsored-recommendations 有 xpui.spa 实证；其余两条为社区黑名单中的 legacy 端点。
+DOMAIN,sponsored-recommendations.spotify.com,REJECT
+DOMAIN,adeventtracker.spotify.com,REJECT
+DOMAIN,ads-fa.spotify.com,REJECT
+
+# ---- 第三方广告网络（默认关闭，按需取消注释；注意这是全局拦截，影响所有 App） ----
+# DOMAIN,media-match.com,REJECT
+# DOMAIN,securepubads.g.doubleclick.net,REJECT
+# DOMAIN,pagead2.googlesyndication.com,REJECT
+# DOMAIN,googleads.g.doubleclick.net,REJECT
+# DOMAIN,www.googleadservices.com,REJECT
+# DOMAIN,js.moatads.com,REJECT
+# DOMAIN,b.scorecardresearch.com,REJECT
+# DOMAIN,d3rt1990lpmkn.cloudfront.net,REJECT
+
+# ---- 遥测 / 日志 / 崩溃上报（默认关闭，按需取消注释） ----
+# DOMAIN,log.spotify.com,REJECT
+# DOMAIN,analytics.spotify.com,REJECT
+# DOMAIN,crashdump.spotify.com,REJECT
+
+[Script]
+# artist / album 列表解锁：把移动端 platform 参数改写为 ipad。
+# iOS 专用；macOS 不会命中该路径，无副作用。
+spotify-json = type=http-request,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(artistview\/v1\/artist|album-entity-view\/v2\/album)\/,requires-body=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-json.js
+# UCS 账户属性改写：iOS(bootstrap + customize) 与 macOS(customize) 共用同一分支。
+spotify-proto = type=http-response,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-proto.js,script-update-interval=0
+
+[MITM]
+hostname = %APPEND% spclient.wg.spotify.com, *spclient.spotify.com
