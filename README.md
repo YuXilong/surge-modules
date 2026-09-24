@@ -135,21 +135,57 @@ macOS 客户端把产品状态**落盘缓存**了。只装模块不改缓存的�
 
 ## 验证是否生效
 
+缓存文件是「`<key长度><key> \x09 <value长度><value>`」的二进制键值对。注意：**XML 形式只在未改写的旧缓存里出现**，改写成功后变成键值对，所以用 grep `<type>premium</type>` 反而会误判成"没生效"。
+
+下面这段按 key 长度精确锚定，避免 `type` 命中 `assured-age-method-type`、`offline` 命中 `key-caching-auto-offline` 这类子串：
+
 ```bash
-# 看缓存里的产品状态是否已变成 premium
-strings ~/Library/Application\ Support/Spotify/PersistentCache/offline.bnk \
-  | grep -o -E '<(type|catalogue|player-license|ads|name)>[^<]*'
+python3 - <<'PY'
+import os
+d = open(os.path.expanduser(
+    "~/Library/Application Support/Spotify/PersistentCache/offline.bnk"), "rb").read()
+for k in ("type", "catalogue", "player-license", "ads", "name", "financial-product"):
+    kb = k.encode()
+    m = d.find(bytes([len(kb)]) + kb + b"\x09")
+    if m < 0:
+        print(f"{k:18s} = 未找到"); continue
+    p = m + len(kb) + 2
+    print(f"{k:18s} = " + repr(d[p+1:p+1+d[p]].decode("utf-8", "replace")))
+PY
 ```
 
-期望看到 `<type>premium</type>`、`<catalogue>premium</catalogue>`、`<ads>0</ads>`。
-仍是 `free` 就说明 UCS 没被成功改写（先查 MITM 证书与增强模式，再查是否重新登录）。
+### 实测结果（Spotify for macOS 1.3.1.234）
+
+启用模块 → 清理缓存 → 重启客户端后，同一份 `offline.bnk` 的前后变化：
+
+| 属性 | 改写前（免费） | 改写后 |
+| --- | --- | --- |
+| `type` | `free` | **`premium`** |
+| `catalogue` | `free` | **`premium`** |
+| `player-license` | `on-demand` | **`premium`** |
+| `ads` | `1` | **`0`** |
+| `name` | `Spotify Free` | **`Spotify Premium`** |
+| `financial-product` | `pr:free,tc:0` | **`pr:premium,tc:0`** |
+| `high-bitrate` | `0` | `1` |
+| `smart-shuffle` | `UNAVAILABLE` | `AVAILABLE` |
+| `mixing-tools` | `VIEW` | `EDIT` |
+
+`product-expiry` / `subscription-enddate` 会被写成当前时间 **+1 个月**（实测 `2026-10-24T07:25:46Z`）。这是 `spotify-proto.js` 中 `expireDate.setMonth(+1)` 的独有指纹，可用来确认改写确实由该脚本完成，而非服务端本地下发。
+
+网络链路同期确认：
+
+- `spclient.wg.spotify.com` 的 MITM 证书签发者为 `Surge Generated CA`（即模块的 `%APPEND%` 已生效）
+- Spotify 主进程有十余条到 `127.0.0.1:6152` 的 `ESTABLISHED` 连接，流量确实全程经过 Surge
+
+仍是 `free` 时，按顺序排查：Surge 增强模式 → MITM 证书信任 → 是否已完全退出客户端并清理缓存 → 是否重新登录。
 
 ## 已知局限
 
 - 属于**部分解锁**：音质不能设为「超高」，离线下载等能力不保证，这是上游脚本的既有边界。
 - 桌面端广告走 CEF + 原生核心两套网络栈，若 Spotify 后续对 UCS 域名启用证书固定（certificate pinning），MITM 会失效——那是这套方案的共同天花板，不是本模块能绕过的。
 - `reset-spotify-mac-state.sh` 会删除 `offline.bnk`，其中也包含离线歌曲索引，清理后客户端需要重新同步离线内容。
-- 未在本机实际联调播放验证（需要真实登录态与订阅态），上述结论来自客户端二进制与缓存的静态分析；安装步骤与验证命令已给出，可自行复现。
+- **已验证**：macOS 客户端确实应用了改写后的账户属性（上表前后对比），网络链路（MITM + 代理连接）也已确认。
+- **未验证**：实际听感层面的"不再播放广告"。账户状态已变为 premium 且 `ads=0`，按 Spotify 的判定逻辑应当不再插播广告，但这一点无法通过静态检查证实，需要实际听一首歌确认。
 
 ## 许可与署名
 
