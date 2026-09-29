@@ -8,6 +8,7 @@ let result = {};
 try {
   const endpoint = /^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)(?:\/ts-\d+)?(?:\?[^#]*)?$/.exec($request.url);
   const status = Number($response.status);
+  if (endpoint) console.log(`[喜马拉雅] 已匹配 ${endpoint[1]}，HTTP ${status}`);
   if (endpoint && status >= 200 && status < 300 && $response.body) {
     const payload = JSON.parse($response.body);
     const data = payload && payload.data;
@@ -23,7 +24,9 @@ try {
       }
     }
   }
+  if (endpoint && !result.body) console.log("[喜马拉雅] 未改写：响应状态、成功标志或余额不满足改写条件");
 } catch (_) {
   // 接口结构变化或非 JSON 响应时原样放行。
+  console.log("[喜马拉雅] 响应解析失败，已原样放行");
 }
 $done(result);

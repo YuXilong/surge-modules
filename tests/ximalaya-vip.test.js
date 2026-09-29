@@ -43,4 +43,17 @@ assert.equal(JSON.parse(run(response, base.replace("https:", "http:") + "current
 const moduleText = fs.readFileSync(require.resolve("../Ximalaya.module"), "utf8");
 assert(moduleText.includes("hostname = %APPEND% adse.ximalaya.com"));
 assert(moduleText.includes("/js/ximalaya_vip.js"));
+// A module rule must allow the duration/reward host before the conflicting base-config block.
+const moduleRules = moduleText.split("[Rule]")[1]?.split(/\n\[/)[0] || "";
+const rules = (moduleRules + "\nDOMAIN-SUFFIX,adse.ximalaya.com,REJECT")
+  .split("\n").map(line => line.trim()).filter(line => line && !line.startsWith("#"));
+function route(host) {
+  for (const rule of rules) {
+    const [type, value, policy] = rule.split(",").map(part => part.trim());
+    if ((type === "DOMAIN" && host === value) ||
+        (type === "DOMAIN-SUFFIX" && (host === value || host.endsWith("." + value)))) return policy;
+  }
+}
+assert.equal(route("adse.ximalaya.com"), "DIRECT", "free-listen host must override the base-config reject");
+assert.equal(route("unrelated.example"), undefined);
 console.log("PASS: three endpoints, passthrough, type preservation, unchanged reward fields, and module references");
