@@ -24,6 +24,18 @@ for (const endpoint of ["currentDuration", "decreaseDuration", "rewardDuration"]
     assert.deepEqual(actual, { ...response, data: { ...response.data, balance: 86400 } });
   }
 }
+// The free-listen page uses durationBalance and has no success flag.
+const page = { ret: 0, data: { durationBalance: 975, freeListenType: 0, rewardInfos: [{ rewardDuration: 1800, addedDuration: 0 }] } };
+for (const suffix of ["", "/ts-123?device=example"]) {
+  assert.deepEqual(JSON.parse(run(page, base + "recAlbumInfo" + suffix).body),
+    { ...page, data: { ...page.data, durationBalance: 86400 } });
+}
+for (const body of [{ ...page, ret: 1 }, { ret: 0, data: { durationBalance: -1 } },
+  { ret: 0, data: { durationBalance: "invalid" } }, { ret: 0, data: { balance: 975 } }]) {
+  assert.deepEqual(run(body, base + "recAlbumInfo"), {});
+}
+assert.deepEqual(run(page, base + "recAlbumInfo", 500), {});
+assert.deepEqual(run(response, "https://adse.ximalaya.com/welfare/queryListenTime/ts-123"), {});
 const stringResponse = { ret: "0", data: { success: "true", balance: "0" } };
 assert.equal(JSON.parse(run(stringResponse).body).data.balance, "86400");
 for (const body of [
@@ -56,4 +68,6 @@ function route(host) {
 }
 assert.equal(route("adse.ximalaya.com"), "DIRECT", "free-listen host must override the base-config reject");
 assert.equal(route("unrelated.example"), undefined);
-console.log("PASS: three endpoints, passthrough, type preservation, unchanged reward fields, and module references");
+const pattern = new RegExp(moduleText.match(/ximalaya-free-listen = .*?pattern=(.*?),requires-body/)[1]);
+assert(pattern.test(base + "recAlbumInfo/ts-123?device=example"));
+console.log("PASS: four endpoints, passthrough, type preservation, unchanged reward fields, and module references");

@@ -1,5 +1,5 @@
 #!name=喜马拉雅去广告与免费听（实验性）
-#!desc=基于 iOS 9.5.10 静态分析，仅将成功响应的免费听 balance 提高到至少 86400 秒；不增加服务端额度、不保证付费音频授权，尚未真机验证。
+#!desc=依据静态分析与抓包，仅将成功响应的免费听 balance / durationBalance 提高到至少 86400 秒；不增加服务端额度、不保证付费音频授权，尚未真机验证。
 #!author=yuxilong
 #!category=实验
 #!homepage=https://github.com/YuXilong/surge-modules
@@ -33,7 +33,7 @@ DOMAIN,adse.ximalaya.com,DIRECT
 ^https?:\/\/.*\.xima.*\.com\/discovery-feed\/focus\/queryF - reject
 
 [Script]
-ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-2
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-3
 
 喜马拉雅去广告=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-feed\/v\d\/mix,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
 
