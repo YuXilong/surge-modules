@@ -85,7 +85,7 @@ const pattern = new RegExp(moduleText.match(/ximalaya-free-listen = .*?pattern=(
 assert(pattern.test(base + "recAlbumInfo/ts-123?device=example"));
 const requestRule = moduleText.match(/ximalaya-decrease-request = type=http-request,pattern=(.*?),requires-body=1,script-path=(\S+)/);
 assert(requestRule);
-assert(requestRule[2].includes("/js/ximalaya_vip.js?v=20260930-1"));
+assert(requestRule[2].includes("/js/ximalaya_vip.js?v=20260930-2"));
 const requestPattern = new RegExp(requestRule[1]);
 function runRequest(body, url = base + "decreaseDuration/ts-123") {
   const calls = [];
@@ -129,9 +129,14 @@ for (const suffix of ["", "/ts-123?device=example"]) {
   const result = runRequest(syncBody, syncUrl + suffix);
   assert.deepEqual(Object.keys(result), ["body"]);
   assert.deepEqual(JSON.parse(result.body), { ...syncBody, duration: 0 });
-  assert.deepEqual(run(response, syncUrl + suffix), {}, "syncListenTime response must pass through");
-  assert(!pattern.test(syncUrl + suffix));
+  assert.deepEqual(JSON.parse(run(response, syncUrl + suffix).body), { ...response, data: { ...response.data, balance: 86400 } });
+  assert(pattern.test(syncUrl + suffix));
 }
+for (const body of ["invalid json", { ...response, ret: 1 }, { ...response, data: { ...response.data, success: false } },
+  ...[86400, 100000, -1, 1.5, null].map(balance => ({ ...response, data: { ...response.data, balance } }))]) {
+  assert.deepEqual(run(body, syncUrl), {});
+}
+assert.deepEqual(run(response, syncUrl, 500), {});
 for (const body of ["invalid json", null, [], {}, { localDuration: 120 }]) assert.deepEqual(runRequest(body, syncUrl), {});
 for (const url of [syncUrl + "Other", syncUrl + "/extra", syncUrl.replace("ad-incentive.ximalaya.com", "evil.test"), syncUrl.replace("ad-incentive.ximalaya.com", "adse.ximalaya.com")]) {
   assert(!syncPattern.test(url));
@@ -139,4 +144,4 @@ for (const url of [syncUrl + "Other", syncUrl + "/extra", syncUrl.replace("ad-in
 }
 assert.equal(route("ad-incentive.ximalaya.com"), "DIRECT");
 assert(moduleText.split("[MITM]")[1].includes("ad-incentive.ximalaya.com"));
-console.log("PASS: both request durations=0, four response endpoints, passthrough and module references");
+console.log("PASS: both request durations=0, five response endpoints, passthrough and module references");

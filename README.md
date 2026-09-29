@@ -16,7 +16,7 @@ Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库�
 | 历史价格 | [HistoryPrice.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module) | 京东商品页比价 |
 
 - 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；微博去广告请启用独立模块。
-- 喜马拉雅将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将三个免费听时长接口成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
+- 喜马拉雅将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将 `currentDuration`、`decreaseDuration`、`rewardDuration`、`syncListenTime` 成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
 - 历史价格仅覆盖京东，向 `browser.bijiago.com` 发送商品链接查询价格；无外部脚本更新检查。
 - 新增模块尚未真机验证，彩云会员字段改写不保证服务端会员能力。提交并推送到 `main` 后，远程安装地址才能加载新增文件。
 

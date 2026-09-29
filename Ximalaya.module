@@ -16,9 +16,9 @@ DOMAIN,adse.wsa.ximalaya.com,DIRECT
 DOMAIN,ad-incentive.ximalaya.com,DIRECT
 
 [Script]
-ximalaya-decrease-request = type=http-request,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/decreaseDuration(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-1
-ximalaya-sync-listen-request = type=http-request,pattern=^https?:\/\/ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-1
-ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-1
+ximalaya-decrease-request = type=http-request,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/decreaseDuration(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-2
+ximalaya-sync-listen-request = type=http-request,pattern=^https?:\/\/ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-2
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/(adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)|ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-2
 
 [MITM]
 hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, ad-incentive.ximalaya.com

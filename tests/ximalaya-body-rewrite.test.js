@@ -55,8 +55,12 @@ const syncPattern = new RegExp(syncRequest[1]);
 const syncUrl = 'https://ad-incentive.ximalaya.com/incentive-sync/ting/welfare/syncListenTime';
 for (const suffix of ['', '/ts-123?device=test']) {
   assert(syncPattern.test(syncUrl + suffix));
-  assert(!rules.some(line => new RegExp(line.split(' ')[1]).test(syncUrl + suffix)), 'syncListenTime response must pass through');
+  assert(new RegExp(rules[0].split(' ')[1]).test(syncUrl + suffix));
 }
+const balanceFilter = /^http-response-jq (\S+) '(.*)'$/.exec(rules[0])[2];
+const syncResponse = { ret: 0, data: { duration: 0, balance: 60, success: true, code: 200, msg: null } };
+const result = JSON.parse(execFileSync('jq', ['-c', balanceFilter], { input: JSON.stringify(syncResponse), encoding: 'utf8' }));
+assert.deepEqual(result, { ...syncResponse, data: { ...syncResponse.data, balance: 86400 } });
 for (const url of [syncUrl + 'Other', syncUrl + '/extra', syncUrl.replace('ad-incentive.ximalaya.com', 'evil.test'), syncUrl.replace('ad-incentive.ximalaya.com', 'adse.ximalaya.com')]) assert(!syncPattern.test(url));
 assert(text.split('[Rule]')[1].split('[Body Rewrite]')[0].includes('DOMAIN,ad-incentive.ximalaya.com,DIRECT'));
 assert(text.split('[MITM]')[1].includes('ad-incentive.ximalaya.com'));
