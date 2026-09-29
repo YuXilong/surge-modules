@@ -29,7 +29,7 @@ for (const endpoint of ["currentDuration", "decreaseDuration", "rewardDuration"]
 }
 // The free-listen page uses durationBalance and has no success flag.
 const page = { ret: 0, data: { durationBalance: 975, freeListenType: 0, rewardInfos: [{ rewardDuration: 1800, addedDuration: 0 }] } };
-// The app talks to the wsa acceleration host; recAlbumInfo must match it too.
+// Match both hosts for recAlbumInfo.
 for (const host of [base, wsaBase]) {
   for (const suffix of ["", "/ts-123?device=example"]) {
     assert.deepEqual(JSON.parse(run(page, host + "recAlbumInfo" + suffix).body),
@@ -83,4 +83,39 @@ assert.equal(route("adse.ximalaya.com"), "DIRECT", "free-listen host must overri
 assert.equal(route("unrelated.example"), undefined);
 const pattern = new RegExp(moduleText.match(/ximalaya-free-listen = .*?pattern=(.*?),requires-body/)[1]);
 assert(pattern.test(base + "recAlbumInfo/ts-123?device=example"));
-console.log("PASS: four endpoints, passthrough, type preservation, unchanged reward fields, and module references");
+const requestRule = moduleText.match(/ximalaya-decrease-request = type=http-request,pattern=(.*?),requires-body=1,script-path=(\S+)/);
+assert(requestRule);
+assert(requestRule[2].includes("/js/ximalaya_vip.js?v=20260929-6"));
+const requestPattern = new RegExp(requestRule[1]);
+function runRequest(body, url = base + "decreaseDuration/ts-123") {
+  const calls = [];
+  vm.runInNewContext(script, {
+    $request: { url, method: "POST", headers: { "content-type": "application/json", "x-example": "test-only" }, body: typeof body === "string" ? body : JSON.stringify(body) },
+    $done: value => calls.push(JSON.parse(JSON.stringify(value))),
+    console: { log() {} },
+  });
+  assert.equal(calls.length, 1);
+  return calls[0];
+}
+for (const host of [base, wsaBase]) {
+  for (const suffix of ["", "/ts-123?device=example"]) {
+    const url = host + "decreaseDuration" + suffix;
+    assert(requestPattern.test(url));
+    const body = {
+      duration: 60, localDuration: 120, albumId: 123, trackId: 456,
+      eventExt: '{"kind":"example","duration":99}', ext: '{"enabled":true}',
+      data: { duration: 99 },
+    };
+    const result = runRequest(body, url);
+    assert.deepEqual(Object.keys(result), ["body"], "must preserve URL and headers");
+    assert.deepEqual(JSON.parse(result.body), { ...body, duration: 0 });
+  }
+}
+for (const body of ["", "invalid json", null, [], 42, {}, { data: { duration: 60 } }]) {
+  assert.deepEqual(runRequest(body), {});
+}
+for (const url of [base + "currentDuration", base + "decreaseDurationOther", "https://evil.test/incentive/ting/decreaseDuration"]) {
+  assert(!requestPattern.test(url));
+  assert.deepEqual(runRequest({ duration: 60 }, url), {});
+}
+console.log("PASS: decreaseDuration request duration=0, four response endpoints, passthrough and module references");

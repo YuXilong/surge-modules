@@ -13,7 +13,7 @@ for (const [index, line] of rules.entries()) {
   const field = index === 0 ? 'balance' : 'durationBalance';
   const endpoints = index === 0 ? ['currentDuration', 'decreaseDuration', 'rewardDuration'] : ['recAlbumInfo'];
   for (const endpoint of endpoints) {
-    // The app uses the wsa acceleration host; both variants must match.
+    // Match both hosts.
     for (const host of ['adse.ximalaya.com', 'adse.wsa.ximalaya.com']) {
       assert(pattern.test('https://' + host + '/incentive/ting/' + endpoint + '/ts-123?device=test'));
     }
@@ -29,4 +29,23 @@ for (const [index, line] of rules.entries()) {
     assert.deepEqual(run(failure), failure);
   }
 }
-console.log('PASS: native jq balance rewrite, endpoint matching, unchanged fields and failure passthrough');
+const requests = text.split('\n').filter(line => line.startsWith('http-request-jq '));
+assert.equal(requests.length, 1);
+const request = /^http-request-jq (\S+) '(.*)'$/.exec(requests[0]);
+assert(request);
+const requestPattern = new RegExp(request[1]);
+for (const host of ['adse.ximalaya.com', 'adse.wsa.ximalaya.com']) {
+  for (const suffix of ['', '/ts-123?device=test']) {
+    assert(requestPattern.test('https://' + host + '/incentive/ting/decreaseDuration' + suffix));
+  }
+}
+for (const url of ['https://adse.ximalaya.com/incentive/ting/currentDuration', 'https://adse.ximalaya.com/incentive/ting/decreaseDurationOther', 'https://evil.test/incentive/ting/decreaseDuration']) assert(!requestPattern.test(url));
+const runRequest = value => JSON.parse(execFileSync('jq', ['-c', request[2]], { input: JSON.stringify(value), encoding: 'utf8' }));
+const body = {
+  duration: 60, localDuration: 120, albumId: 123, trackId: 456,
+  eventExt: '{"kind":"example","duration":99}', ext: '{"enabled":true}',
+  data: { duration: 99 },
+};
+assert.deepEqual(runRequest(body), { ...body, duration: 0 });
+for (const value of [null, [], 42, {}, { data: { duration: 60 } }]) assert.deepEqual(runRequest(value), value);
+console.log('PASS: native jq request duration=0, response balances, endpoint matching and passthrough');
