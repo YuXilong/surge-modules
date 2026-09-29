@@ -13,11 +13,6 @@
 DOMAIN,adse.ximalaya.com,DIRECT
 # App 实际走加速域名 adse.wsa.ximalaya.com（同一免费听接口），一并放行并解密。
 DOMAIN,adse.wsa.ximalaya.com,DIRECT
-# 拒掉喜马自建 HTTPDNS（LinkEye），触发「use localDNS retry」回落，
-# 让接口请求改回按域名解析，避免 HTTPDNS 直连绕过日志与改写。
-DOMAIN,dns.ximalaya.com,REJECT
-DOMAIN,gslbali.ximalaya.com,REJECT
-DOMAIN,gslbtx.ximalaya.com,REJECT
 
 [URL Rewrite]
 # 保留 adse 的激励广告与时长接口，仅拦截明确的开屏、信息流广告路径。

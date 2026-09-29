@@ -7,11 +7,6 @@
 [Rule]
 DOMAIN,adse.ximalaya.com,DIRECT
 DOMAIN,adse.wsa.ximalaya.com,DIRECT
-# 拒掉喜马自建 HTTPDNS（LinkEye），触发二进制里的「use localDNS retry」回落，
-# 让接口请求改回按域名解析——否则 HTTPDNS 直连的连接可能不进代理日志、也绕过改写。
-DOMAIN,dns.ximalaya.com,REJECT
-DOMAIN,gslbali.ximalaya.com,REJECT
-DOMAIN,gslbtx.ximalaya.com,REJECT
 
 [Body Rewrite]
 http-response-jq ^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") and (.data.success == true or .data.success == 1 or .data.success == "1" or .data.success == "true") then if (.data.balance | type) == "number" then if .data.balance >= 0 and .data.balance < 86400 and (.data.balance | floor) == .data.balance then .data.balance = 86400 else . end else . end else . end'
