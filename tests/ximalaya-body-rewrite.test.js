@@ -13,9 +13,13 @@ for (const [index, line] of rules.entries()) {
   const field = index === 0 ? 'balance' : 'durationBalance';
   const endpoints = index === 0 ? ['currentDuration', 'decreaseDuration', 'rewardDuration'] : ['recAlbumInfo'];
   for (const endpoint of endpoints) {
-    assert(pattern.test('https://adse.ximalaya.com/incentive/ting/' + endpoint + '/ts-123?device=test'));
+    // The app uses the wsa acceleration host; both variants must match.
+    for (const host of ['adse.ximalaya.com', 'adse.wsa.ximalaya.com']) {
+      assert(pattern.test('https://' + host + '/incentive/ting/' + endpoint + '/ts-123?device=test'));
+    }
   }
   assert(!pattern.test('https://adse.ximalaya.com/welfare/queryListenTime'));
+  assert(!pattern.test('https://evil.adse.wsa.ximalaya.com.attacker.test/incentive/ting/' + endpoints[0]));
   const run = value => JSON.parse(execFileSync('jq', ['-c', match[2]], { input: JSON.stringify(value), encoding: 'utf8' }));
   const response = { ret: 0, data: { [field]: 975, ...(index === 0 ? { success: true } : {}), duration: 0, rewardInfos: [{ rewardDuration: 1800 }] } };
   assert.deepEqual(run(response), { ...response, data: { ...response.data, [field]: 86400 } });

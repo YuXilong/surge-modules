@@ -18,17 +18,23 @@ function run(body, url = base + "currentDuration/ts-123", status = 200, response
   return calls[0];
 }
 
+const wsaBase = "https://adse.wsa.ximalaya.com/incentive/ting/";
 for (const endpoint of ["currentDuration", "decreaseDuration", "rewardDuration"]) {
-  for (const suffix of ["", "/ts-123?device=example"]) {
-    const actual = JSON.parse(run(response, base + endpoint + suffix).body);
-    assert.deepEqual(actual, { ...response, data: { ...response.data, balance: 86400 } });
+  for (const host of [base, wsaBase]) {
+    for (const suffix of ["", "/ts-123?device=example"]) {
+      const actual = JSON.parse(run(response, host + endpoint + suffix).body);
+      assert.deepEqual(actual, { ...response, data: { ...response.data, balance: 86400 } });
+    }
   }
 }
 // The free-listen page uses durationBalance and has no success flag.
 const page = { ret: 0, data: { durationBalance: 975, freeListenType: 0, rewardInfos: [{ rewardDuration: 1800, addedDuration: 0 }] } };
-for (const suffix of ["", "/ts-123?device=example"]) {
-  assert.deepEqual(JSON.parse(run(page, base + "recAlbumInfo" + suffix).body),
-    { ...page, data: { ...page.data, durationBalance: 86400 } });
+// The app talks to the wsa acceleration host; recAlbumInfo must match it too.
+for (const host of [base, wsaBase]) {
+  for (const suffix of ["", "/ts-123?device=example"]) {
+    assert.deepEqual(JSON.parse(run(page, host + "recAlbumInfo" + suffix).body),
+      { ...page, data: { ...page.data, durationBalance: 86400 } });
+  }
 }
 for (const body of [{ ...page, ret: 1 }, { ret: 0, data: { durationBalance: -1 } },
   { ret: 0, data: { durationBalance: "invalid" } }, { ret: 0, data: { balance: 975 } }]) {

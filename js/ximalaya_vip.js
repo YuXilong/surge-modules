@@ -6,7 +6,7 @@
 const minimumBalance = 86400; // 秒；实验值，不是服务端赠送时长。
 let result = {};
 try {
-  const endpoint = /^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(?:\/ts-\d+)?(?:\?[^#]*)?$/.exec($request.url);
+  const endpoint = /^https?:\/\/adse\.(?:wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(?:\/ts-\d+)?(?:\?[^#]*)?$/.exec($request.url);
   const rawStatus = $response.status == null ? $response.statusCode : $response.status;
   const statusLine = /^HTTP\/\d(?:\.\d)?\s+(\d{3})(?:\s|$)/.exec(String(rawStatus));
   const status = Number(statusLine ? statusLine[1] : rawStatus);

@@ -26,6 +26,8 @@ Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库�
 
 喜马拉雅模块将 `adse.ximalaya.com` 设为直连，以免基础配置的整域广告拦截阻断时长和奖励接口。若其他模块仍命中该域名的 `REJECT`，需调整模块优先级或移除冲突规则。全局路由使用「配置」。
 
+App 真机走的是加速域名 `adse.wsa.ximalaya.com`（同一免费听接口），Safari 手测的是 `adse.ximalaya.com`——两个 host 都已加入 MITM 与改写匹配。排错时若在代理日志看到 `adse.wsa.ximalaya.com` 未被改写，确认该 host 在 MITM `hostname` 列表且改写 pattern 用 `adse\.(wsa\.)?ximalaya\.com`。
+
 更新喜马拉雅模块后，重新连接并退出、重开 App，再进入免费听页面刷新时长。脚本日志出现「已匹配」表示接口触发，出现「本地 balance」或「本地 durationBalance」才表示对应余额已改写；仅看到页面剩余分钟数不足以判断生效。
 
 更新模块后重新连接，并彻底退出再打开京东、彩云天气。当前配置需要开启 HTTPS 解密，且证书已安装并完全信任。

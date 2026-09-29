@@ -11,6 +11,8 @@
 # 此域名同时承载时长查询和激励广告；覆盖基础配置中的整域广告拦截。
 # 若其他模块也拦截此域名，请调整模块优先级或删除冲突规则。
 DOMAIN,adse.ximalaya.com,DIRECT
+# App 实际走加速域名 adse.wsa.ximalaya.com（同一免费听接口），一并放行并解密。
+DOMAIN,adse.wsa.ximalaya.com,DIRECT
 
 [URL Rewrite]
 # 保留 adse 的激励广告与时长接口，仅拦截明确的开屏、信息流广告路径。
@@ -33,7 +35,7 @@ DOMAIN,adse.ximalaya.com,DIRECT
 ^https?:\/\/.*\.xima.*\.com\/discovery-feed\/focus\/queryF - reject
 
 [Script]
-ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-4
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-5
 
 喜马拉雅去广告=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-feed\/v\d\/mix,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
 
@@ -42,4 +44,4 @@ ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.co
 喜马拉雅去广告2=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/mobile-user\/v\d\/homePage,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
 
 [MITM]
-hostname = %APPEND% adse.ximalaya.com, *.ximalaya.com, *.ximalaya.com.cn, *.xmcdn.com
+hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, *.ximalaya.com, *.ximalaya.com.cn, *.xmcdn.com

@@ -2,12 +2,15 @@
 #!desc=使用原生正文改写提高本地余额到 86400 秒。请停用原喜马拉雅模块后单独测试；不修改服务端额度。
 #!author=yuxilong
 
+# App 实际走加速域名 adse.wsa.ximalaya.com（同一免费听接口），Safari 手测的是 adse.ximalaya.com；
+# 两个都要覆盖，否则 App 请求既不进 MITM 解密、也不匹配下面的改写 pattern。
 [Rule]
 DOMAIN,adse.ximalaya.com,DIRECT
+DOMAIN,adse.wsa.ximalaya.com,DIRECT
 
 [Body Rewrite]
-http-response-jq ^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") and (.data.success == true or .data.success == 1 or .data.success == "1" or .data.success == "true") then if (.data.balance | type) == "number" then if .data.balance >= 0 and .data.balance < 86400 and (.data.balance | floor) == .data.balance then .data.balance = 86400 else . end else . end else . end'
-http-response-jq ^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/recAlbumInfo(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") then if (.data.durationBalance | type) == "number" then if .data.durationBalance >= 0 and .data.durationBalance < 86400 and (.data.durationBalance | floor) == .data.durationBalance then .data.durationBalance = 86400 else . end else . end else . end'
+http-response-jq ^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") and (.data.success == true or .data.success == 1 or .data.success == "1" or .data.success == "true") then if (.data.balance | type) == "number" then if .data.balance >= 0 and .data.balance < 86400 and (.data.balance | floor) == .data.balance then .data.balance = 86400 else . end else . end else . end'
+http-response-jq ^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/recAlbumInfo(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") then if (.data.durationBalance | type) == "number" then if .data.durationBalance >= 0 and .data.durationBalance < 86400 and (.data.durationBalance | floor) == .data.durationBalance then .data.durationBalance = 86400 else . end else . end else . end'
 
 [MITM]
-hostname = %APPEND% adse.ximalaya.com
+hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com
