@@ -1,6 +1,6 @@
 /*
  * 喜马拉雅：实验性免费听本地时长改写。
- * decreaseDuration 的 JSON 请求字段 duration 归零；成功响应的 data.balance / data.durationBalance 提高到本地实验值。
+ * decreaseDuration / syncListenTime 的 JSON 请求字段 duration 归零；免费听成功响应的余额提高到本地实验值。
  * 原始模板：YuXilong/module_scripts，yuxilong，2026/06/04。
  */
 const minimumBalance = 86400; // 秒；实验值，不是服务端赠送时长。
@@ -8,20 +8,21 @@ let result = {};
 try {
   const endpoint = /^https?:\/\/adse\.(?:wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(?:\/ts-\d+)?(?:\?[^#]*)?$/.exec($request.url);
   if (typeof $response === "undefined") {
-    if (endpoint && endpoint[1] === "decreaseDuration" && $request.body) {
+    const syncListenTime = /^https?:\/\/ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime(?:\/ts-\d+)?(?:\?[^#]*)?$/.test($request.url);
+    if (((endpoint && endpoint[1] === "decreaseDuration") || syncListenTime) && $request.body) {
       const payload = JSON.parse($request.body);
       if (payload && typeof payload === "object" && !Array.isArray(payload) &&
           Object.prototype.hasOwnProperty.call(payload, "duration")) {
         payload.duration = 0;
         result = { body: JSON.stringify(payload) };
-        console.log("[喜马拉雅] v20260929-6 decreaseDuration 请求 duration -> 0");
+        console.log(`[喜马拉雅] v20260930-1 ${syncListenTime ? "syncListenTime" : "decreaseDuration"} 请求 duration -> 0`);
       }
     }
   } else {
     const rawStatus = $response.status == null ? $response.statusCode : $response.status;
     const statusLine = /^HTTP\/\d(?:\.\d)?\s+(\d{3})(?:\s|$)/.exec(String(rawStatus));
     const status = Number(statusLine ? statusLine[1] : rawStatus);
-    if (endpoint) console.log(`[喜马拉雅] v20260929-6 已匹配 ${endpoint[1]}，HTTP ${status}，status=${JSON.stringify($response.status)}，statusCode=${JSON.stringify($response.statusCode)}，body=${typeof $response.body}/${($response.body || "").length}`);
+    if (endpoint) console.log(`[喜马拉雅] v20260930-1 已匹配 ${endpoint[1]}，HTTP ${status}，status=${JSON.stringify($response.status)}，statusCode=${JSON.stringify($response.statusCode)}，body=${typeof $response.body}/${($response.body || "").length}`);
     if (endpoint && status >= 200 && status < 300 && $response.body) {
       const payload = JSON.parse($response.body);
       const data = payload && payload.data;

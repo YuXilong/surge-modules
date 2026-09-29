@@ -12,21 +12,21 @@ Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库�
 | 通用去广告 | [AdUltraPlus.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/AdUltraPlus.module) | 启动页、信息流等广告拦截 |
 | 彩云天气 | [Caiyun.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Caiyun.module) | 本地会员字段改写与广告拦截 |
 | 微博 | [Weibo.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Weibo.module) | 开屏、信息流广告与推广清理 |
-| 喜马拉雅 | [Ximalaya.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module) | 去广告与实验性免费听时长改写 |
+| 喜马拉雅 | [Ximalaya.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module) | 请求时长与免费听余额改写 |
 | 历史价格 | [HistoryPrice.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module) | 京东商品页比价 |
 
-- 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；这两款 App 请启用对应独立模块。
-- 喜马拉雅将 `decreaseDuration` 的 JSON 请求字段 `duration` 设为 `0`，并将三个时长接口成功响应的 `balance` 与免费听页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
+- 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；微博去广告请启用独立模块。
+- 喜马拉雅将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将三个免费听时长接口成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
 - 历史价格仅覆盖京东，向 `browser.bijiago.com` 发送商品链接查询价格；无外部脚本更新检查。
 - 新增模块尚未真机验证，彩云会员字段改写不保证服务端会员能力。提交并推送到 `main` 后，远程安装地址才能加载新增文件。
 
 ## Shadowrocket 更新与排错
 
-[Shadowrocket 原生测试版](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module) 使用内置 jq 将 `decreaseDuration` 的 JSON 请求字段 `duration` 设为 `0` 并改写数字余额，不加载 JavaScript、不包含去广告。与脚本版二选一启用，更新后重新连接并重开 App。测试命令：`node tests/ximalaya-body-rewrite.test.js`（需要 jq）。
+[Shadowrocket 原生测试版](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module) 使用内置 jq 将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0` 并改写免费听数字余额，不加载 JavaScript、不包含去广告。与脚本版二选一启用，更新后重新连接并重开 App。测试命令：`node tests/ximalaya-body-rewrite.test.js`（需要 jq）。
 
 喜马拉雅模块将 `adse.ximalaya.com` 设为直连，以免基础配置的整域广告拦截阻断时长和奖励接口。若其他模块仍命中该域名的 `REJECT`，需调整模块优先级或移除冲突规则。全局路由使用「配置」。
 
-模块同时覆盖 `adse.ximalaya.com` 和 `adse.wsa.ximalaya.com`，两个域名均需启用 MITM 解密。
+模块覆盖 `adse.ximalaya.com`、`adse.wsa.ximalaya.com` 和 `ad-incentive.ximalaya.com`，均需启用 MITM 解密。
 
 更新喜马拉雅模块后，重新连接并退出、重开 App，再进入免费听页面刷新时长。脚本日志出现「请求 duration -> 0」表示请求字段已改写；「本地 balance」或「本地 durationBalance」表示响应余额已改写；仅看到页面剩余分钟数不足以判断生效。
 

@@ -85,7 +85,7 @@ const pattern = new RegExp(moduleText.match(/ximalaya-free-listen = .*?pattern=(
 assert(pattern.test(base + "recAlbumInfo/ts-123?device=example"));
 const requestRule = moduleText.match(/ximalaya-decrease-request = type=http-request,pattern=(.*?),requires-body=1,script-path=(\S+)/);
 assert(requestRule);
-assert(requestRule[2].includes("/js/ximalaya_vip.js?v=20260929-6"));
+assert(requestRule[2].includes("/js/ximalaya_vip.js?v=20260930-1"));
 const requestPattern = new RegExp(requestRule[1]);
 function runRequest(body, url = base + "decreaseDuration/ts-123") {
   const calls = [];
@@ -118,4 +118,25 @@ for (const url of [base + "currentDuration", base + "decreaseDurationOther", "ht
   assert(!requestPattern.test(url));
   assert.deepEqual(runRequest({ duration: 60 }, url), {});
 }
-console.log("PASS: decreaseDuration request duration=0, four response endpoints, passthrough and module references");
+const syncUrl = "https://ad-incentive.ximalaya.com/incentive-sync/ting/welfare/syncListenTime";
+const syncRule = moduleText.match(/ximalaya-sync-listen-request = type=http-request,pattern=(.*?),requires-body=1,script-path=(\S+)/);
+assert(syncRule);
+assert.equal(syncRule[2], requestRule[2]);
+const syncPattern = new RegExp(syncRule[1]);
+const syncBody = { duration: 60, localDuration: 120, type: 2, signature: "test-signature", data: { duration: 99 } };
+for (const suffix of ["", "/ts-123?device=example"]) {
+  assert(syncPattern.test(syncUrl + suffix));
+  const result = runRequest(syncBody, syncUrl + suffix);
+  assert.deepEqual(Object.keys(result), ["body"]);
+  assert.deepEqual(JSON.parse(result.body), { ...syncBody, duration: 0 });
+  assert.deepEqual(run(response, syncUrl + suffix), {}, "syncListenTime response must pass through");
+  assert(!pattern.test(syncUrl + suffix));
+}
+for (const body of ["invalid json", null, [], {}, { localDuration: 120 }]) assert.deepEqual(runRequest(body, syncUrl), {});
+for (const url of [syncUrl + "Other", syncUrl + "/extra", syncUrl.replace("ad-incentive.ximalaya.com", "evil.test"), syncUrl.replace("ad-incentive.ximalaya.com", "adse.ximalaya.com")]) {
+  assert(!syncPattern.test(url));
+  assert.deepEqual(runRequest(syncBody, url), {});
+}
+assert.equal(route("ad-incentive.ximalaya.com"), "DIRECT");
+assert(moduleText.split("[MITM]")[1].includes("ad-incentive.ximalaya.com"));
+console.log("PASS: both request durations=0, four response endpoints, passthrough and module references");

@@ -40,7 +40,17 @@ for (const endpoint of ['currentDuration', 'decreaseDuration', 'rewardDuration',
     assert(!blockers.some(regex => regex.test(url)), `blocked reward endpoint: ${url}`);
   }
 }
-assert(blockers.some(regex => regex.test('https://adse.ximalaya.com/ting/loading?test=1')));
+for (const url of [
+  'https://adse.ximalaya.com/ting/loading?test=1',
+  'https://adbehavior.ximalaya.com/api/v1/adRealTime',
+  'https://adbehavior.wsa.ximalaya.com:443/api/v1/adRealTime',
+  'https://xdcs-collector.ximalaya.com/api/v1/realtime',
+  'https://mres.ximalaya.com/dog-portal/checkOld/ios_remote/123',
+]) assert(!blockers.some(regex => regex.test(url)), `blocked Ximalaya endpoint: ${url}`);
+assert(blockers.some(regex => regex.test('https://ads.example.test/api/v1/adRealTime')));
+const ximalayaModule = fs.readFileSync(path.join(root, 'Ximalaya.module'), 'utf8');
+assert(!ximalayaModule.includes('[URL Rewrite]'));
+assert(!ximalayaModule.includes('/js/vendor/ddgksf2013/ximalaya_json.js'));
 
 async function run(file, url, body, get) {
   const calls = [];
@@ -69,11 +79,6 @@ async function run(file, url, body, get) {
     assert(matches('Caiyun', 'https://biz.cyapi.cn/api/v1/' + endpoint));
   }
 
-  const ximalaya = 'js/vendor/ddgksf2013/ximalaya_json.js';
-  const feed = JSON.parse((await run(ximalaya, 'https://mobile.ximalaya.com/discovery-feed/v3/mix', {
-    body: [{ item: { adInfo: {} } }, { item: { moduleType: 'mix_ad' } }, { item: { id: 1 } }],
-  })).body);
-  assert.deepEqual(feed.body, [{ item: { id: 1 } }]);
   const caiyun = 'js/vendor/ddgksf2013/caiyun_json.js';
   const userUrl = 'https://biz.caiyunapp.com/v2/user?app_name=weather';
   assert.equal(JSON.parse((await run(caiyun, userUrl, { result: { wt: { vip: {} } } })).body).result.is_vip, 1);
@@ -119,6 +124,6 @@ async function run(file, url, body, get) {
     assert.equal(requests.length, 2);
     assert.equal(JSON.parse(result.body).floors.length, 2);
   }
-  console.log(`PASS: ${scripts.size} local scripts compile; references, incentive endpoints, ad filtering, Caiyun and price failure paths verified`);
+  console.log(`PASS: ${scripts.size} local scripts compile; references, Ximalaya passthrough, Caiyun and price failure paths verified`);
 
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -30,7 +30,7 @@ for (const [index, line] of rules.entries()) {
   }
 }
 const requests = text.split('\n').filter(line => line.startsWith('http-request-jq '));
-assert.equal(requests.length, 1);
+assert.equal(requests.length, 2);
 const request = /^http-request-jq (\S+) '(.*)'$/.exec(requests[0]);
 assert(request);
 const requestPattern = new RegExp(request[1]);
@@ -48,4 +48,16 @@ const body = {
 };
 assert.deepEqual(runRequest(body), { ...body, duration: 0 });
 for (const value of [null, [], 42, {}, { data: { duration: 60 } }]) assert.deepEqual(runRequest(value), value);
+const syncRequest = /^http-request-jq (\S+) '(.*)'$/.exec(requests[1]);
+assert(syncRequest);
+assert.equal(syncRequest[2], request[2]);
+const syncPattern = new RegExp(syncRequest[1]);
+const syncUrl = 'https://ad-incentive.ximalaya.com/incentive-sync/ting/welfare/syncListenTime';
+for (const suffix of ['', '/ts-123?device=test']) {
+  assert(syncPattern.test(syncUrl + suffix));
+  assert(!rules.some(line => new RegExp(line.split(' ')[1]).test(syncUrl + suffix)), 'syncListenTime response must pass through');
+}
+for (const url of [syncUrl + 'Other', syncUrl + '/extra', syncUrl.replace('ad-incentive.ximalaya.com', 'evil.test'), syncUrl.replace('ad-incentive.ximalaya.com', 'adse.ximalaya.com')]) assert(!syncPattern.test(url));
+assert(text.split('[Rule]')[1].split('[Body Rewrite]')[0].includes('DOMAIN,ad-incentive.ximalaya.com,DIRECT'));
+assert(text.split('[MITM]')[1].includes('ad-incentive.ximalaya.com'));
 console.log('PASS: native jq request duration=0, response balances, endpoint matching and passthrough');

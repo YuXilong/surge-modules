@@ -709,7 +709,7 @@ http:\/\/ad\.myfriday\.cn\/d\/json\/1\.1 _ reject
 ^https?://.+?/img/ad\.union\.api/ _ reject
 ^https?://.+?/c/s/splashSchedule _ reject
 ^https?://.+?/brand/search/v1\.json _ reject
-^https?://.+?/api/v\d/adRealTime _ reject
+^https?://(?!(?:[^/]+\.)?ximalaya\.com(?::\d+)?/).+?/api/v\d/adRealTime _ reject
 ^https?://.+?/allOne\.php\?ad_name _ reject
 ^https?://.+?/(outadservice|ting/preload)/ _ reject
 ^https?://.+?(:\d+)?/V\d/splash/getSplashV\d\.action$ _ reject

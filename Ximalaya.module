@@ -1,5 +1,5 @@
-#!name=喜马拉雅去广告与免费听（实验性）
-#!desc=将 decreaseDuration 的 JSON 请求字段 duration 设为 0，并将成功响应的 balance / durationBalance 提高到至少 86400 秒。
+#!name=喜马拉雅时长改写（实验性）
+#!desc=将 decreaseDuration / syncListenTime 的 JSON 请求字段 duration 设为 0，并将免费听成功响应的 balance / durationBalance 提高到至少 86400 秒。
 #!author=yuxilong
 #!category=实验
 #!homepage=https://github.com/YuXilong/surge-modules
@@ -13,36 +13,12 @@
 DOMAIN,adse.ximalaya.com,DIRECT
 # 同时放行并解密加速域名。
 DOMAIN,adse.wsa.ximalaya.com,DIRECT
-
-[URL Rewrite]
-# 保留 adse 的激励广告与时长接口，仅拦截明确的开屏、信息流广告路径。
-^https?:\/\/.*\.xima.*\.com\/mobile-playpage\/view\/ - reject
-^https?:\/\/.*\.xima.*\.com\/chaos-notice-web\/v1\/message\/preview\/list - reject
-^https?:\/\/.*\.xima.*\.com\/social-web\/bottomTabs\/dynamicEntrance\/status - reject
-^https?:\/\/.*\.xmcdn\.com\/\w{8}\/\w{4}-\w{16}\/.+gif$ - reject
-^https?:\/\/.*\.xima.*\.com\/(dog-portal\/checkOld|(child-mobile\/child|aged-mobile\/aged)\/mode\/query) - reject
-^https?:\/\/.*\.xima.*\.com\/discovery-feed\/isShowUserGiftPendant - reject
-^https?:\/\/.*\.xima.*\.com\/mobile-user\/unread - reject
-^https?:\/\/.*\.xima.*\.com/mobile-user/minorProtection/pop - reject
-^https?:\/\/.*\.xima.*\.com\/collector\/xl\/v\d - reject
-^https?:\/\/.*\.xima.*\.com\/butler-portal\/versionCheck - reject
-^https?:\/\/(adbehavior|xdcs-collector)\.ximalaya\.com\/ - reject
-^https?:\/\/.*\.xima.*\.com\/mobile\/discovery\/v\d\/location - reject
-^https?:\/\/.*\.xima.*\.com\/hotWord - reject
-^https?:\/\/.*\.xima.*\.com\/guideWord - reject
-^https?:\/\/.*\.xima.*\.com\/api\/v\d\/adRealTime - reject
-^https?:\/\/.*\.xima.*\.com\/ting\/(loading|feed|home)([/?]|$) - reject
-^https?:\/\/.*\.xima.*\.com\/discovery-feed\/focus\/queryF - reject
+DOMAIN,ad-incentive.ximalaya.com,DIRECT
 
 [Script]
-ximalaya-decrease-request = type=http-request,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/decreaseDuration(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-6
-ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-6
-
-喜马拉雅去广告=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-feed\/v\d\/mix,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
-
-喜马拉雅去广告1=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-category\/v\d/category,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
-
-喜马拉雅去广告2=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/mobile-user\/v\d\/homePage,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
+ximalaya-decrease-request = type=http-request,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/decreaseDuration(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-1
+ximalaya-sync-listen-request = type=http-request,pattern=^https?:\/\/ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-1
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-1
 
 [MITM]
-hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, *.ximalaya.com, *.ximalaya.com.cn, *.xmcdn.com
+hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, ad-incentive.ximalaya.com
