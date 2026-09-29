@@ -1,8 +1,25 @@
 # Surge Modules
 
-Surge 模块与配套脚本，目前提供 Spotify 模块，适用于 iOS / iPadOS / macOS。
+Surge 模块与配套脚本，包含 Spotify 模块及喜马拉雅免费听实验模块。
 
-## 安装
+## 模块
+
+| 模块 | 状态 |
+| --- | --- |
+| [Spotify](Spotify.module) | iOS / iPadOS / macOS 部分解锁，使用限制见下文 |
+| [喜马拉雅](Ximalaya.module) | 基于 iOS 9.5.10 的实验性本地时长改写，尚未真机验证 |
+
+喜马拉雅模板迁自 `YuXilong/module_scripts` 的 `Shadowrocket/module/XimalayaVIP.sgmodule`，
+配套脚本为 [js/ximalaya_vip.js](js/ximalaya_vip.js)，现仅匹配三个免费听时长接口，
+将成功响应的 `balance` 提高到至少 86400 秒，不增加服务端额度或保证付费音频授权。
+
+喜马拉雅模块安装地址（同样需要启用并信任 MITM 证书）：
+
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module
+```
+
+## Spotify 安装
 
 在 Surge → 模块 → 从 URL 安装中填入：
 

@@ -7,3 +7,7 @@
 .vscode/
 .idea/
 *.swp
+
+# 本地分析文档与中间产物
+/docs/
+/.tmp/

@@ -1,0 +1,15 @@
+#!name=喜马拉雅免费听（实验性本地时长改写）
+#!desc=基于 iOS 9.5.10 静态分析，仅将成功响应的免费听 balance 提高到至少 86400 秒；不增加服务端额度、不保证付费音频授权，尚未真机验证。
+#!author=yuxilong
+#!category=实验
+#!homepage=https://github.com/YuXilong/surge-modules
+
+# 原始模板：YuXilong/module_scripts/Shadowrocket/module/XimalayaVIP.sgmodule
+# 只处理已确认的时长接口；保留失败响应、广告奖励结果及其他权限字段。
+# 脚本与模块发布到 main 后，远程安装才能加载本次改动。
+
+[Script]
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://fastly.jsdelivr.net/gh/YuXilong/surge-modules@main/js/ximalaya_vip.js
+
+[MITM]
+hostname = %APPEND% adse.ximalaya.com
