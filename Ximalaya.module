@@ -33,7 +33,7 @@ DOMAIN,adse.ximalaya.com,DIRECT
 ^https?:\/\/.*\.xima.*\.com\/discovery-feed\/focus\/queryF - reject
 
 [Script]
-ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-3
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260929-4
 
 喜马拉雅去广告=type=http-response,pattern=^https?:\/\/.*\.xima.*\.com\/discovery-feed\/v\d\/mix,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/ximalaya_json.js
 

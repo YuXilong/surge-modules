@@ -7,8 +7,10 @@ const minimumBalance = 86400; // 秒；实验值，不是服务端赠送时长�
 let result = {};
 try {
   const endpoint = /^https?:\/\/adse\.ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)(?:\/ts-\d+)?(?:\?[^#]*)?$/.exec($request.url);
-  const status = Number($response.status);
-  if (endpoint) console.log(`[喜马拉雅] 已匹配 ${endpoint[1]}，HTTP ${status}`);
+  const rawStatus = $response.status == null ? $response.statusCode : $response.status;
+  const statusLine = /^HTTP\/\d(?:\.\d)?\s+(\d{3})(?:\s|$)/.exec(String(rawStatus));
+  const status = Number(statusLine ? statusLine[1] : rawStatus);
+  if (endpoint) console.log(`[喜马拉雅] v20260929-4 已匹配 ${endpoint[1]}，HTTP ${status}，status=${JSON.stringify($response.status)}，statusCode=${JSON.stringify($response.statusCode)}，body=${typeof $response.body}/${($response.body || "").length}`);
   if (endpoint && status >= 200 && status < 300 && $response.body) {
     const payload = JSON.parse($response.body);
     const data = payload && payload.data;

@@ -6,11 +6,11 @@ const vm = require("node:vm");
 const script = fs.readFileSync(require.resolve("../js/ximalaya_vip.js"), "utf8");
 const base = "https://adse.ximalaya.com/incentive/ting/";
 const response = { ret: 0, data: { success: true, balance: 60, duration: 600, continuePlay: false } };
-function run(body, url = base + "currentDuration/ts-123", status = 200) {
+function run(body, url = base + "currentDuration/ts-123", status = 200, responseFields = {}) {
   const calls = [];
   vm.runInNewContext(script, {
     $request: { url },
-    $response: { body: typeof body === "string" ? body : JSON.stringify(body), status },
+    $response: { body: typeof body === "string" ? body : JSON.stringify(body), status, ...responseFields },
     $done: (result) => calls.push(JSON.parse(JSON.stringify(result))),
     console: { log() {} },
   });
@@ -36,6 +36,13 @@ for (const body of [{ ...page, ret: 1 }, { ret: 0, data: { durationBalance: -1 }
 }
 assert.deepEqual(run(page, base + "recAlbumInfo", 500), {});
 assert.deepEqual(run(response, "https://adse.ximalaya.com/welfare/queryListenTime/ts-123"), {});
+// Proxy runtimes can expose either statusCode or an HTTP status line.
+for (const fields of [{ status: undefined, statusCode: 200 }, { status: "HTTP/1.1 200 OK" }, { status: "HTTP/2 200" }]) {
+  assert.equal(JSON.parse(run(response, base + "currentDuration", 200, fields).body).data.balance, 86400);
+}
+for (const fields of [{ status: undefined }, { status: "HTTP/1.1 500 Internal Server Error" }, { status: undefined, statusCode: 403 }]) {
+  assert.deepEqual(run(response, base + "currentDuration", 200, fields), {});
+}
 const stringResponse = { ret: "0", data: { success: "true", balance: "0" } };
 assert.equal(JSON.parse(run(stringResponse).body).data.balance, "86400");
 for (const body of [
