@@ -1,7 +1,7 @@
 #!name=彩云天气pro
 #!desc=彩云天气pro
 [Script]
-彩云天气pro=type=http-response,pattern=^http[s]?:\/\/biz\.(caiyunapp|cyapi)\.(com|cn)\/v2\/user.*$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+彩云天气pro=type=http-response,pattern=^https?:\/\/(biz|wrapper|starplucker)\.(caiyunapp|cyapi)\.(com|cn)\/(v\d+\/user|(?:[^?#]+\/)?v\d+\/(user_detail|vip_info))(?:[/?]|$),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 [MITM]
 hostname= %APPEND% *.caiyunapp.com,*.cyapi.com,*.cyapi.cn ,*.caiyunapp.cn
 [URL Rewrite]

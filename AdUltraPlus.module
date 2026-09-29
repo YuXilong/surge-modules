@@ -901,7 +901,7 @@ ltsst-ad=type=http-response,pattern=^https?:\/\/www\.1314zhilv\.com\/ltsstnew\/(
 
 123pan=type=http-response,pattern=^https?:\/\/www\.123pan\.com\/s\/[0-9a-zA-Z=_/-]+\.html,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/123pan.js
 
-caiyun_json=type=http-response,pattern=^https?:\/\/wrapper\.cyapi\.cn\/v\d\/activity,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json=type=http-response,pattern=^https?:\/\/wrapper\.cyapi\.cn\/v\d\/activity,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
 weibo_json=type=http-response,pattern=^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=user_center,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/weibo_json.js
 
@@ -935,19 +935,19 @@ wechatApplet=type=http-response,pattern=^https?:\/\/ump\.ems\.com\.cn\/new-gener
 
 fenbi=type=http-response,pattern=^https?:\/\/tiku\.fenbi\.com\/activity\/app\/launcher\?,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/fmz200/Scripts/fenbi.js
 
-caiyun_json2=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/homefeatures,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json2=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/homefeatures,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json3=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/feeds,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json3=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/feeds,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json4=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/features,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json4=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/features,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json5=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/banners,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json5=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/operation/banners,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json6=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/notification/message_center,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json6=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/notification/message_center,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json7=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/config/cypage,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json7=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/config/cypage,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json8=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/campaigns,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json8=type=http-response,pattern=^https?:\/\/starplucker\.cyapi\.cn\/v\d/campaigns,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
 blued=type=http-response,pattern=^https?:\/\/social\.blued\.cn\/users\/.+\/more\/ios\?v=2,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/fmz200/Scripts/blued.js
 
@@ -1178,9 +1178,9 @@ cnftp19=type=http-response,pattern=^https?:\/\/cards\.iqiyi\.com\/(views_home\/3
 baishitv=type=http-response,pattern=^https?:\/\/bp-api\.bestv\.com\.cn\/cms\/api\/audit\/home\/getCommonMixData,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/baishitv.js
 
 
-caiyun_json9=type=http-response,pattern=^https?:\/\/biz\.cyapi\.cn\/v\d\/user,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json9=type=http-response,pattern=^https?:\/\/biz\.cyapi\.cn\/v\d\/user,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
-caiyun_json10=type=http-response,pattern=^https?:\/\/biz\.cyapi\.cn\/api\/v\d\/user_detail,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json10=type=http-response,pattern=^https?:\/\/biz\.cyapi\.cn\/api\/v\d\/user_detail,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
 smzdm_json8=type=http-response,pattern=^https?:\/\/baike-api\.smzdm\.com\/home_v3\/list,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/smzdm_json.js
 
@@ -1284,7 +1284,7 @@ coolapk4=type=http-response,pattern=^https?:\/\/api\.coolapk\.com\/v6\/feed\/(de
 
 coolapk5=type=http-response,pattern=^https?:\/\/api\.coolapk\.com\/v6\/(feed\/(replyList|detail)|main\/indexV8|dataList),requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/coolapk.js
 
-caiyun_json11=type=http-response,pattern=^https?:\/\/api\.caiyunapp\.com\/v\d\/activity,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js
+caiyun_json11=type=http-response,pattern=^https?:\/\/api\.caiyunapp\.com\/v\d\/activity,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/caiyun_json.js?v=20260929-1
 
 dict2=type=http-response,pattern=^https?:\/\/api\.369cx\.cn\/v\d\/Splash\/GetSplashAd,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/ddgksf2013/dict.js
 

@@ -87,8 +87,10 @@ function handleWareBusiness() {
     $.log("Start Handle WareBusiness Job");
     let body = JSON.parse(resp.body);
     let floors = body.floors;
-    const commodity_info = floors[floors.length - 1];
-    const skuId = commodity_info.data.wareInfo.skuId;
+    if (!Array.isArray(floors)) { $.log('历史价格：响应缺少 floors'); return $.done(); }
+    const commodity_info = floors.find(floor => floor?.data?.wareInfo?.skuId);
+    const skuId = commodity_info?.data?.wareInfo?.skuId;
+    if (!skuId || !/^\d+$/.test(String(skuId))) { $.log('历史价格：未找到商品编号'); return $.done(); }
     $.log("skuId:" + skuId);
     handleRequest(skuId, "JD", text => {
         const obj = {
@@ -130,7 +132,12 @@ function handleWareBusiness() {
             }
         }
 
-        floors.insert(bestIndex, obj);
+        const existing = floors.find(floor => floor?.mId === 'bpAdword' && floor?.data?.ad);
+        if (existing) {
+            existing.data.ad.adword = text + '\n' + (existing.data.ad.adword || '');
+        } else {
+            floors.splice(bestIndex, 0, obj);
+        }
         $.done({ body: JSON.stringify(body) });
     });
 }
@@ -291,13 +298,18 @@ function handleRequest(id, type, callback, errorCallback) {
 function handleBijiago(data) {
 
     if (!data.success)
-        return data.msg;
+        return '历史价格：' + data.msg;
 
     let obj = data.data;
+    if (obj?.is_ban || obj?.action?.method === 'redirect') {
+        $.log('历史价格：比价服务要求验证');
+        return '历史价格：比价服务要求验证，暂无法获取价格';
+    }
+    if (!Array.isArray(obj?.store)) return '历史价格：服务返回的数据格式不支持';
     let store = {};
 
     if (obj['store'].length == 0) {
-        return "";
+        return '历史价格：暂无该商品记录';
     }
 
     if (obj['store'].length == 1) {
@@ -308,7 +320,7 @@ function handleBijiago(data) {
     }
 
     let tips = "无tips";
-    if (obj.hasOwnProperty("analysis")) {
+    if (obj.analysis && typeof obj.analysis === "object") {
         if (obj['analysis'].hasOwnProperty("tip")) {
             tips = obj['analysis']['tip'];
         }
@@ -328,7 +340,7 @@ function handleBijiago(data) {
         now: {
             "type": "price",
             "title": "当前价",
-            "price": Math.round(parseFloat(store['last_price']) / 100),
+            "price": Number((parseFloat(store['last_price']) / 100).toFixed(2)),
             "date": "-"
         },
         highest: {
@@ -365,7 +377,7 @@ function handleBijiago(data) {
 
     let beginDayTime = new Date(store['short_day_line_begin_time']);
     let dayNum = getDaysBetween(beginDayTime, new Date());
-    let days = store['short_day_line'];
+    let days = Array.isArray(store['short_day_line']) ? store['short_day_line'] : [];
 
     for (let i = 0; i < 30 - dayNum && i < days.length; ++i) {
         let price = days[i];
@@ -379,7 +391,8 @@ function handleBijiago(data) {
         }
     }
 
-    for (let promo_day of obj['analysis']['promo_days']) {
+    for (let promo_day of (Array.isArray(obj.analysis?.promo_days) ? obj.analysis.promo_days : [])) {
+        if (!promo_day || typeof promo_day.show !== 'string') continue;
         let show = promo_day['show'];
         let price = Math.round(promo_day['price']);
         let date = promo_day['date'];
@@ -390,15 +403,15 @@ function handleBijiago(data) {
             historyObj._1111['price'] = price;
             historyObj._1111['date'] = date;
         } else
-            historyObj.set(show, {
+            historyObj['promo_' + show] = {
                 "type": "price",
                 "title": show,
                 "price": price,
                 "date": date
-            });
+            };
     }
 
-    let result = '';
+    let result = '历史价格\n';
 
     for (var key in historyObj) {
         let nowItem = historyObj.now;
@@ -497,7 +510,13 @@ function request_history_price(id, type, callback) {
             };
 
             if (!err) {
-                try { result.data = JSON.parse(data); } catch (e) { err = String(e); }
+                try {
+                    // JSONP is parsed as data, never evaluated as JavaScript.
+                    const text = String(data).trim();
+                    const jsonp = text.match(/^[\w$.]+\s*\(([\s\S]*)\)\s*;?$/);
+                    result.data = JSON.parse(jsonp ? jsonp[1] : text);
+                    if (Number(rsp?.status || 200) >= 400) throw new Error('HTTP ' + rsp.status);
+                } catch (e) { err = String(e); }
             }
             if (err) {
                 result.success = false;
@@ -538,7 +557,8 @@ function Json2Qs(json) {
 }
 
 function time2str(date = +new Date()) {
-    return new Date(date).toJSON().substr(0, 19).replace('T', ' ').split(' ')[0].replace(/\./g, '-');
+    const iso = new Date(date).toJSON();
+    return iso ? iso.slice(0, 10) : '-';
 }
 
 function getDaysBetween(startDate, endDate) {

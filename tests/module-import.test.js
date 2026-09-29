@@ -17,7 +17,7 @@ for (const name of modules) {
     if (!line.trim() || line.startsWith('#')) continue;
     for (const match of line.matchAll(/(script-path=|data=")(https?:\/\/[^\s,"]+)/g)) {
       assert(match[2].startsWith(prefix), `${name}: external dependency ${match[2]}`);
-      const file = path.join(root, match[2].slice(prefix.length));
+      const file = path.join(root, match[2].slice(prefix.length).split('?')[0]);
       assert(fs.statSync(file).size > 0, file);
       if (match[1] === 'script-path=') scripts.add(file);
     }
@@ -58,6 +58,17 @@ async function run(file, url, body, get) {
   return calls[0];
 }
 (async () => {
+  function matches(name, url) {
+    return [...fs.readFileSync(path.join(root, name + '.module'), 'utf8').matchAll(/pattern=(.*?),(?=[a-z-]+=)/g)]
+      .some(match => new RegExp(match[1]).test(url));
+  }
+  assert(matches('HistoryPrice', 'https://api.m.jd.com/client.action?client=apple&functionId=wareBusiness&x=1'));
+  assert(matches('HistoryPrice', 'https://api.m.jd.com/api?functionId=wareBusiness'));
+  assert(!matches('HistoryPrice', 'https://api.m.jd.com/api?functionId=wareBusinessOther'));
+  for (const endpoint of ['user_detail', 'vip_info']) {
+    assert(matches('Caiyun', 'https://biz.cyapi.cn/api/v1/' + endpoint));
+  }
+
   const ximalaya = 'js/vendor/ddgksf2013/ximalaya_json.js';
   const feed = JSON.parse((await run(ximalaya, 'https://mobile.ximalaya.com/discovery-feed/v3/mix', {
     body: [{ item: { adInfo: {} } }, { item: { moduleType: 'mix_ad' } }, { item: { id: 1 } }],
@@ -67,11 +78,33 @@ async function run(file, url, body, get) {
   const userUrl = 'https://biz.caiyunapp.com/v2/user?app_name=weather';
   assert.equal(JSON.parse((await run(caiyun, userUrl, { result: { wt: { vip: {} } } })).body).result.is_vip, 1);
   assert.deepEqual(await run(caiyun, userUrl, 'invalid json'), {});
+  assert.equal(JSON.parse((await run(caiyun, userUrl, { result: { name: 'keep' } })).body).result.wt.vip.enabled, true);
+  const detail = JSON.parse((await run(caiyun, 'https://biz.cyapi.cn/api/v1/user_detail', { vip_info: { vip: { keep: true } } })).body);
+  assert(detail.vip_info.svip.expires_time > Date.now() / 1000);
+  assert.equal(detail.vip_info.vip.keep, true);
+  const vip = JSON.parse((await run(caiyun, 'https://wrapper.cyapi.cn/api/v1/vip_info', { svip: null })).body);
+  assert(vip.svip.expires_time > Date.now() / 1000);
+  assert.deepEqual(await run(caiyun, userUrl, { status: 'error', result: null }), {});
+
   const price = 'js/vendor/deezertidal/jdprice.js';
   const jd = 'https://api.m.jd.com/client.action?functionId=';
   assert.deepEqual(JSON.parse((await run(price, jd + 'serverConfig', {
     serverConfig: { httpdns: 'x', dnsvip: 'x', dnsvip_v6: 'x', keep: true },
   })).body), { serverConfig: { keep: true } });
+  const product = { floors: [{ data: { wareInfo: { skuId: '123' } } }, { mId: 'bpAdword', data: { ad: { adword: '原促销', adLink: 'keep' } } }, { mId: 'tail' }] };
+  for (const mode of ['partial', 'blocked', 'jsonp']) {
+    const result = await run(price, jd + 'wareBusiness', product, (options, callback) => {
+      if (!options.url.includes('price_towards')) return callback(null, { status: 200, headers: {} }, '{}');
+      const data = mode === 'blocked' ? { is_ban: 1 } : { store: [{ last_price: 12345, lowest: 100, highest: 150 }] };
+      callback(null, { status: mode === 'blocked' ? 202 : 200 }, mode === 'jsonp' ? 'cb(' + JSON.stringify(data) + ');' : JSON.stringify(data));
+    });
+    const output = JSON.parse(result.body);
+    assert.equal(output.floors.length, 3);
+    const ad = output.floors[1].data.ad;
+    assert(ad.adword.includes(mode === 'blocked' ? '验证' : '123.45'));
+    assert(ad.adword.includes('原促销'));
+    assert.equal(ad.adLink, 'keep');
+  }
   for (const mode of ['offline', 'invalid', 'empty-cookie', 'success']) {
     const requests = [];
     const result = await run(price, jd + 'wareBusiness', {
