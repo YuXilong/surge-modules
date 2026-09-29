@@ -1,0 +1,10 @@
+#!name=历史价格（京东比价）
+#!desc=在京东商品页显示历史价格；依赖第三方比价服务，需要启用并信任 MITM 证书，尚未真机验证。
+#!homepage=https://github.com/YuXilong/surge-modules
+
+
+[Script]
+京东比价 = type=http-response,requires-body=1,pattern=^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig),script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/vendor/deezertidal/jdprice.js
+
+[MITM]
+hostname = %APPEND% api.m.jd.com

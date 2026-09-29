@@ -1,23 +1,24 @@
 # Surge Modules
 
-Surge 模块与配套脚本，包含 Spotify 模块及喜马拉雅免费听实验模块。
+Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库；安装前需启用并信任 MITM 证书。
 
-## 模块
+## 模块安装
 
-| 模块 | 状态 |
-| --- | --- |
-| [Spotify](Spotify.module) | iOS / iPadOS / macOS 部分解锁，使用限制见下文 |
-| [喜马拉雅](Ximalaya.module) | 基于 iOS 9.5.10 的实验性本地时长改写，尚未真机验证 |
+在 Surge → 模块 → 从 URL 安装中填入对应地址：
 
-喜马拉雅模板迁自 `YuXilong/module_scripts` 的 `Shadowrocket/module/XimalayaVIP.sgmodule`，
-配套脚本为 [js/ximalaya_vip.js](js/ximalaya_vip.js)，现仅匹配三个免费听时长接口，
-将成功响应的 `balance` 提高到至少 86400 秒，不增加服务端额度或保证付费音频授权。
+| 模块 | 安装地址 | 功能 |
+| --- | --- | --- |
+| Spotify | [Spotify.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module) | 部分账户属性改写与去广告 |
+| 通用去广告 | [AdUltraPlus.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/AdUltraPlus.module) | 启动页、信息流等广告拦截 |
+| 彩云天气 | [Caiyun.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Caiyun.module) | 本地会员字段改写与广告拦截 |
+| 微博 | [Weibo.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Weibo.module) | 开屏、信息流广告与推广清理 |
+| 喜马拉雅 | [Ximalaya.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module) | 去广告与实验性免费听时长改写 |
+| 历史价格 | [HistoryPrice.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module) | 京东商品页比价 |
 
-喜马拉雅模块安装地址（同样需要启用并信任 MITM 证书）：
-
-```text
-https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module
-```
+- 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；这两款 App 请启用对应独立模块。
+- 喜马拉雅保留激励广告接口，将三个时长接口成功响应的 `balance` 提高到至少 86400 秒；不增加服务端额度、不保证付费音频授权。
+- 历史价格仅覆盖京东，向 `browser.bijiago.com` 发送商品链接查询价格；无外部脚本更新检查。
+- 新增模块尚未真机验证，彩云会员字段改写不保证服务端会员能力。提交并推送到 `main` 后，远程安装地址才能加载新增文件。
 
 ## Spotify 安装
 
@@ -29,7 +30,7 @@ https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module
 
 启用模块，并安装、信任 Surge MITM 证书。macOS 还需开启 **增强模式（Enhanced Mode）**。
 
-脚本保存在本仓库，通过 jsDelivr 加载。若无法访问，可将模块中的
+Spotify 脚本保存在本仓库，通过 jsDelivr 加载。若无法访问，可将模块中的
 `fastly.jsdelivr.net/gh/YuXilong/surge-modules@main` 替换为
 `raw.githubusercontent.com/YuXilong/surge-modules/main`。
 
@@ -62,7 +63,7 @@ https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module
 | 文件 | 用途 |
 | --- | --- |
 | [Spotify.module](Spotify.module) | 模块配置及 macOS 适配说明 |
-| [js/](js/) | 本地保存的上游 Spotify 脚本 |
+| [js/](js/) | 模块配套脚本（含 js/vendor/） |
 | [js/NOTICE.md](js/NOTICE.md) | 脚本来源、版本、校验值与更新说明 |
 | [scripts/reset-spotify-mac-state.sh](scripts/reset-spotify-mac-state.sh) | macOS 状态缓存清理 |
 | [scripts/update-upstream-scripts.sh](scripts/update-upstream-scripts.sh) | 上游脚本对比与更新 |
@@ -78,6 +79,6 @@ https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module
 
 本仓库配置及自有脚本采用 [MIT](LICENSE) 许可。Spotify 脚本来自
 [app2smile/rules](https://github.com/app2smile/rules)，保留其 [MIT 版权声明](js/LICENSE-app2smile.md)；
-原模块来自 [yfamilys](https://yfamilys.com/module/spotifyVIP.module)。
+其他脚本保留各自文件内的版权声明。
 
 仅供网络调试与个人学习使用，请遵守相关服务条款及法律法规。
