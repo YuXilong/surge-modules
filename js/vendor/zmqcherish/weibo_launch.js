@@ -3,14 +3,13 @@
 const launchAdUrl1 = '/interface/sdk/sdkad.php';
 const launchAdUrl2 = '/wbapplua/wbpullad.lua';
 
-// function needModify(url) {
-// 	if(url.indexOf(launchAdUrl1) > -1 || url.indexOf(launchAdUrl2) > -1) {
-// 		return true;
-// 	}
-// 	return false;
-// }
-
 function modifyMain(url, data) {
+	if (/^https?:\/\/bootpreload\.uve\.weibo\.com\/v2\/ad\/preload(?:\?|$)/.test(url)) {
+		const parsed = JSON.parse(data);
+		if (!parsed || !Array.isArray(parsed.ads)) return data;
+		parsed.ads = [];
+		return JSON.stringify(parsed);
+	}
 	if(url.indexOf(launchAdUrl1) > -1) {
 		let temp = data.match(/\{.*\}/);
 		if(!temp) return data;
@@ -32,8 +31,11 @@ function modifyMain(url, data) {
 
 var body = $response.body;
 var url = $request.url;
-// if(needModify(url)) {
-body = modifyMain(url, body);
-// }
+try {
+	body = modifyMain(url, body);
+	if (body !== $response.body) console.log('[微博去广告] v20260930-1 开屏广告已清理');
+} catch (error) {
+	console.log('[微博去广告] 开屏响应解析失败，保留原响应');
+}
 
 $done({ body });

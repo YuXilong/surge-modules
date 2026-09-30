@@ -1,4 +1,4 @@
-const version = 'v0515.1';
+const version = 'v20260930-1';
 
 const $ = new Env("微博去广告");
 let storeMainConfig = $.getdata('mainConfig');
@@ -91,6 +91,7 @@ const otherUrls = {
 	'/statuses/container_timeline_topic': 'topicHandler',	//超话tab
 	'/statuses/container_timeline?': 'removeMain',	//首页
 	'/statuses/container_timeline_unread': 'removeMain',	//首页
+	'/statuses/container_timeline_hot': 'removeMain',	//推荐流
 	'/statuses/repost_timeline': 'removeRepost',	//转发流
 }
 
@@ -176,6 +177,7 @@ function removeMain(data) {
 			newItems.push(item);
 		}
 	}
+	console.log('[微博去广告] ' + version + ' 信息流保留：' + newItems.length + '/' + data.items.length);
 	data.items = newItems;
 	log('removeMain success');
 	return data;
