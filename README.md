@@ -12,29 +12,27 @@ Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库�
 | 通用去广告 | [AdUltraPlus.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/AdUltraPlus.module) | 启动页、信息流等广告拦截 |
 | 彩云天气 | [Caiyun.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Caiyun.module) | 本地会员字段改写与广告拦截 |
 | 微博 | [Weibo.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Weibo.module) | 开屏、信息流广告与推广清理 |
-| 喜马拉雅 | [Ximalaya.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module) | 请求时长与免费听余额改写 |
+| 喜马拉雅 | [Ximalaya.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module) | 免费听余额改写、开屏与首页广告过滤 |
 | 历史价格 | [HistoryPrice.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module) | 京东商品页比价 |
 
 - 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；微博去广告请启用独立模块。
-- 喜马拉雅关闭 HTTPDNS 并重算配置签名，让请求恢复使用域名；将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将 `currentDuration`、`decreaseDuration`、`rewardDuration`、`syncListenTime` 成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
+- 喜马拉雅通过两个配置域名关闭 SDK HTTPDNS，让请求恢复使用域名；将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将 `currentDuration`、`decreaseDuration`、`rewardDuration`、`syncListenTime` 成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
 - 历史价格仅覆盖京东，向 `browser.bijiago.com` 发送商品链接查询价格；无外部脚本更新检查。
 - 新增模块尚未真机验证，彩云会员字段改写不保证服务端会员能力。提交并推送到 `main` 后，远程安装地址才能加载新增文件。
 
 ## Shadowrocket 更新与排错
 
-Shadowrocket 可安装 [XimalayaShadowrocket.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module)，与原喜马拉雅模块二选一。此版使用仓库内脚本关闭 HTTPDNS、重算签名，使用内置 jq 将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0` 并改写数字余额，不包含去广告。
+Shadowrocket 使用 [XimalayaShadowrocket.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module)，与 Surge 版二选一；时长改写使用内置 jq，广告过滤与配置处理流程一致。
 
-喜马拉雅模块将 `adse.ximalaya.com` 设为直连，以免基础配置的整域广告拦截阻断时长和奖励接口。若其他模块仍命中该域名的 `REJECT`，需调整模块优先级或移除冲突规则。全局路由使用「配置」。
+喜马拉雅仅针对两个 gslb 配置域名处理 HTTPDNS，不解密所有 IP。配置密文发往自有服务 `https://uu.t-wk.com/v1/ximalaya/httpdns-config`，不上传原始 URL、请求头、Cookie 或设备标识。相同配置在本地缓存一天；服务超时或限流时原样放行，此次关闭 HTTPDNS 可能不生效。公开脚本不包含配置加解密实现。
 
-喜马拉雅会通过 HTTPDNS 将域名换成动态 IP，且可能不携带 TLS SNI；此时只配置域名 MITM 看不到接口。两个模块均处理 `/abtest-portal/sync/<时间戳>`，校验原签名后关闭 `ios&dnsEffectEnable` 并重算签名。脚本日志出现「已关闭 HTTPDNS，配置签名已更新」后，彻底退出 App 再冷启动，让新配置生效。`adse.ximalaya.com`、`adse.wsa.ximalaya.com` 和 `ad-incentive.ximalaya.com` 均已覆盖。
+去广告覆盖开屏、首页广告卡片和已确认的普通 ADX 广告位；保留普通推荐、未知广告位、初始化接口与激励广告。广告过滤在本地完成，新增过滤仍需真机确认缓存和页面表现。
 
-**首次请求仍走 IP 时**，需要先让配置接口被解密，正文脚本无法跨过这一步。Surge 可临时在 MITM `hostname` 加入 `<ip-address>`（检查前面没有排除 IP 的条目），收到上述日志后冷启动，确认目标请求恢复域名和 SNI，再移除该临时项。它会扩大解密范围，可能影响其他 App；本模块不默认开启，也不修改证书校验选项。若该 IP 路径仍有 TLS 错误，或使用 Shadowrocket，可先通过已经验证能解密 IP 的诊断代理完成这次初始化。已完成初始化的设备直接更新模块即可。
+更新模块及脚本缓存后，确认 HTTPS 解密已启用、证书完全信任，再冷启动 App 两次，每次停留约 15 秒。日志出现「配置已处理」表示服务响应或缓存已应用；后续 `replaceConfig`、`currentDuration` 使用域名才表示客户端采用配置。停用模块后，上游配置可能重新开启 HTTPDNS。
 
-关闭开关并重算签名的方案已用真机抓包验证；仓库 JavaScript 另用原始响应校验，仍需在各代理客户端确认实际加载和执行。不要只改开关而保留旧签名，客户端会丢弃配置。停用模块后服务器后续配置可能重新开启 HTTPDNS。
+模块将广告与时长共用域名设为直连。若其他规则仍对这些域名或两个 gslb 配置域名执行 `REJECT`，需移除冲突规则。Shadowrocket 全局路由使用「配置」。
 
-更新喜马拉雅模块后，重新连接并退出、重开 App，再进入免费听页面刷新时长。脚本日志出现「请求 duration -> 0」表示请求字段已改写；「本地 balance」或「本地 durationBalance」表示响应余额已改写；仅看到页面剩余分钟数不足以判断生效。
-
-本地验证：`node tests/ximalaya-httpdns.test.js`、`node tests/ximalaya-vip.test.js`、`node tests/ximalaya-body-rewrite.test.js`（最后一项需要 jq）。
+本地验证：`node tests/ximalaya-httpdns.test.js`、`node tests/ximalaya-httpdns-sdk.test.js`、`node tests/ximalaya-ads.test.js`、`node tests/ximalaya-vip.test.js`、`node tests/ximalaya-body-rewrite.test.js`（需要 jq）。
 
 更新模块后重新连接，并彻底退出再打开京东、彩云天气。当前配置需要开启 HTTPS 解密，且证书已安装并完全信任。
 

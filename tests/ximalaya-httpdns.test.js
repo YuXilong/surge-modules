@@ -1,68 +1,51 @@
 // Run: node tests/ximalaya-httpdns.test.js
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const crypto = require("node:crypto");
-const vm = require("node:vm");
-const script = fs.readFileSync(require.resolve("../js/ximalaya_httpdns.js"), "utf8");
-const key = script.match(/const signingKey = "([a-f0-9]{64})";/)[1];
-const sign = text => crypto.createHash("md5").update(("plans=" + text).toLowerCase() + "&" + key).digest("hex");
-const plans = [{ action: { actionType: "item", payload: { "ios&dnsEffectEnable": "true", other: "中文 Test 😀 ]" } }, version: 2 },
-  { action: { payload: { keep: "unchanged" } } }];
-function signed(value = plans) {
-  return JSON.stringify({ ret: 0, signature: sign(JSON.stringify(value)), plans: value });
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const script = fs.readFileSync(require.resolve('../js/ximalaya_httpdns.js'), 'utf8');
+const url = 'https://gslbtx.ximalaya.com/linkeye-cloud/httpdns/v3/init/123?version=2572&device=private';
+const input = Buffer.alloc(32, 1).toString('base64');
+const output = Buffer.alloc(32, 2).toString('base64');
+const payload = {rtn_code:'200', timestamp:'123', rtn_data:input, keep:'unchanged'};
+async function run({requestUrl=url, response=payload, status=200, mode='ok', cache=null}={}) {
+  const calls=[], requests=[]; let written=null;
+  const context = {
+    $request:{url:requestUrl,method:'GET',headers:{Cookie:'private'}},
+    $done:value=>calls.push(JSON.parse(JSON.stringify(value))),
+    $persistentStore:{read:()=>cache,write:value=>{written=value;return true;}},
+    $httpClient:{post:(options, cb)=>{requests.push(options);queueMicrotask(()=>{
+      if(mode==='hang') return;
+      if(mode==='offline') return cb('offline');
+      cb(null,{status:mode==='limited'?429:200},mode==='bad'?'{}':JSON.stringify({rtn_data:output}));
+      if(mode==='twice') cb(null,{status:200},JSON.stringify({rtn_data:output}));
+    });}}, console:{log(){}},setTimeout:fn=>mode==='hang'?setTimeout(fn,1):setTimeout(fn,5000),clearTimeout,
+  };
+  if(response!==false) context.$response={body:typeof response==='string'?response:JSON.stringify(response),status};
+  vm.runInNewContext(script,context,{timeout:1000});
+  await new Promise(resolve=>mode==='hang'?setTimeout(resolve,10):setImmediate(resolve));
+  assert.equal(calls.length,1);
+  return {result:calls[0],requests,written};
 }
-function run(body = signed(), url = "https://mobile.ximalaya.com/abtest-portal/sync/123", headers = {}, fields = {}) {
-  const calls = [];
-  vm.runInNewContext(script, {
-    $request: { url, headers }, $response: { body, status: 200, ...fields },
-    $done: value => calls.push(JSON.parse(JSON.stringify(value))), console: { log() {} },
-  }, { timeout: 3000 });
-  assert.equal(calls.length, 1);
-  return calls[0];
-}
-const expected = JSON.parse(JSON.stringify(plans));
-expected[0].action.payload["ios&dnsEffectEnable"] = "false";
-for (const host of ["mobile.ximalaya.com", "mobilehera.ximalaya.com", "mobwsa.ximalaya.com"]) {
-  for (const authority of [host, "203.0.113.45", "[2001:db8::7]"]) {
-    const result = run(signed(), `https://${authority}/abtest-portal/sync/123?device=test`, { hOsT: host });
-    const body = JSON.parse(result.body);
-    assert.deepEqual(body, { ret: 0, signature: sign(JSON.stringify(expected)), plans: expected });
-    assert.deepEqual(run(result.body), {}, "already disabled must pass through");
+(async()=>{
+  assert.equal((await run({response:false})).result.url,url.replace('version=2572','version=0e'));
+  const first=await run();
+  assert.deepEqual(JSON.parse(first.result.body),{...payload,rtn_data:output});
+  assert.equal(first.requests[0].url,'https://uu.t-wk.com/v1/ximalaya/httpdns-config');
+  assert.deepEqual(JSON.parse(first.requests[0].body),{rtn_data:input});
+  assert(!JSON.stringify(first.requests).includes('private'));
+  const cached=await run({cache:first.written});
+  assert.equal(cached.requests.length,0);
+  assert.deepEqual(cached.result,first.result);
+  assert((await run({cache:'broken'})).result.body);
+  const changed=await run({cache:first.written,response:{...payload,rtn_data:Buffer.alloc(32,3).toString('base64')}});
+  assert.equal(changed.requests.length,1);
+  for(const mode of ['offline','limited','bad','hang']) assert.deepEqual((await run({mode})).result,{});
+  assert((await run({mode:'twice'})).result.body);
+  for(const options of [{status:500},{response:'broken'},{response:{...payload,timestamp:'124'}},
+    {response:{...payload,rtn_code:'304'}},{response:{...payload,rtn_data:'x'}},
+    {requestUrl:'https://203.0.113.1/linkeye-cloud/httpdns/v3/init/123'},
+    {requestUrl:'https://gslbtx.ximalaya.com.evil.test/linkeye-cloud/httpdns/v3/init/123'}]) {
+    const value=await run(options); assert.deepEqual(value.result,{});assert.equal(value.requests.length,0);
   }
-}
-for (const fields of [{ status: "HTTP/2 200" }, { status: undefined, statusCode: 200 }]) {
-  assert(run(signed(), undefined, undefined, fields).body);
-}
-for (const [body, url, headers, fields] of [
-  [signed(), "https://203.0.113.45/abtest-portal/sync/123"],
-  [signed(), "https://unrelated.example/abtest-portal/sync/123"],
-  [signed(), "https://mobile.ximalaya.com.evil.test/abtest-portal/sync/123"],
-  [signed(), "https://mobile.ximalaya.com/abtest-portal/sync/123extra"],
-  [signed(), "https://mobile.ximalaya.com/abtest-portal/sync/123", { Host: "unrelated.example" }],
-  [signed(), undefined, undefined, { status: 500 }],
-  [signed().replace('"ret":0', '"ret":1')],
-  [signed().replace('"true"', '"false"')], // stale signature
-  [signed([])], [signed([null, {}, { action: null }])],
-  ["not json"], ["null"], ["[]"], ["{}"],
-]) assert.deepEqual(run(body, url, headers, fields), {});
-// Independent MD5 reference, including UTF-8 and block-padding boundaries.
-const context = vm.createContext({ $request: { url: "" }, $response: {}, $done() {}, console: { log() {} } });
-vm.runInContext(script, context);
-for (const value of ["", "abc", "中文😀", ...[55, 56, 63, 64, 65, 1000].map(n => "a".repeat(n))]) {
-  context.input = value;
-  assert.equal(vm.runInContext("md5(input)", context), crypto.createHash("md5").update(value).digest("hex"));
-}
-for (const name of ["Ximalaya", "XimalayaShadowrocket"]) {
-  const text = fs.readFileSync(require.resolve(`../${name}.module`), "utf8");
-  const line = text.split("\n").find(l => l.startsWith("ximalaya-httpdns ="));
-  assert(line && line.includes("requires-body=1") && line.includes("/js/ximalaya_httpdns.js"));
-  const pattern = new RegExp(line.match(/pattern=(.*?),requires-body/)[1]);
-  for (const authority of ["mobile.ximalaya.com", "mobilehera.ximalaya.com", "mobwsa.ximalaya.com", "203.0.113.45", "[2001:db8::7]"]) {
-    assert(pattern.test(`https://${authority}/abtest-portal/sync/123`));
-  }
-  assert(!pattern.test("https://mobile.ximalaya.com/abtest-portal/sync/123extra"));
-  const mitm = text.split("[MITM]")[1];
-  for (const host of ["mobile.ximalaya.com", "mobilehera.ximalaya.com", "mobwsa.ximalaya.com"]) assert(mitm.includes(host));
-  assert(!mitm.includes("<ip-address>"), "normal module must not decrypt unrelated IP traffic");
-}
-console.log("PASS: signed HTTPDNS switch, dynamic IP/Host, status variants, passthrough, MD5 and module wiring");
+  console.log('PASS: service client, exact-input cache, privacy, failure passthrough and single completion');
+})().catch(error=>{console.error(error);process.exitCode=1;});
