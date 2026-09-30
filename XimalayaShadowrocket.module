@@ -1,25 +1,21 @@
-#!name=喜马拉雅免费听（Shadowrocket）
-#!desc=通过域名配置关闭 SDK HTTPDNS，恢复域名请求；使用原生正文改写将 decreaseDuration / syncListenTime 的 JSON 请求字段 duration 设为 0，并提高免费听本地余额到 86400 秒。 过滤开屏和已确认的首页广告；配置密文由 uu.t-wk.com 处理。无需全 IP 解密，更新后冷启动两次。
+#!name=喜马拉雅无限畅听
+#!desc=免费听时长改写，过滤开屏和首页广告。
 #!author=yuxilong
+#!category=实验
+#!homepage=https://github.com/YuXilong/surge-modules
 
-# 同时覆盖主域名与加速域名。
 [Rule]
 DOMAIN,adse.ximalaya.com,DIRECT
 DOMAIN,adse.wsa.ximalaya.com,DIRECT
 DOMAIN,ad-incentive.ximalaya.com,DIRECT
 
 [Script]
-ximalaya-ads = type=http-response,pattern=^https?:\/\/(adse\.(wsa\.)?ximalaya\.com(?::(?:80|443))?\/(ting\/loading(\/ts-\d+)?|adx\/ad)|(mobile|mobilehera|mobwsa)\.ximalaya\.com(?::(?:80|443))?\/discovery-feed\/v4\/mix(\/ts-\d+)?)(\?[^#]*)?$,requires-body=1,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_ads.js?v=20260930-4
-# 仅处理两个 HTTPDNS 配置域名：获取完整配置，由 uu.t-wk.com 处理配置密文，本地缓存相同配置。
-ximalaya-httpdns-sdk-request = type=http-request,pattern=^https:\/\/gslb(tx|ali)\.ximalaya\.com(?::443)?\/linkeye-cloud\/httpdns\/v3\/init\/\d+(\?[^#]*)?$,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_httpdns.js?v=20260930-4
-ximalaya-httpdns-sdk-response = type=http-response,pattern=^https:\/\/gslb(tx|ali)\.ximalaya\.com(?::443)?\/linkeye-cloud\/httpdns\/v3\/init\/\d+(\?[^#]*)?$,requires-body=1,max-size=1048576,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_httpdns.js?v=20260930-4
-
-[Body Rewrite]
-# 请求字段与响应中的 data.duration 不同；缺少 duration 的请求原样放行。
-http-request-jq ^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/decreaseDuration(/ts-\d+)?(\?[^#]*)?$ 'if type == "object" then if has("duration") then .duration = 0 else . end else . end'
-http-request-jq ^https?:\/\/ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime(/ts-\d+)?(\?[^#]*)?$ 'if type == "object" then if has("duration") then .duration = 0 else . end else . end'
-http-response-jq ^https?:\/\/(adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration)|ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime)(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") and (.data.success == true or .data.success == 1 or .data.success == "1" or .data.success == "true") then if (.data.balance | type) == "number" then if .data.balance >= 0 and .data.balance < 86400 and (.data.balance | floor) == .data.balance then .data.balance = 86400 else . end else . end else . end'
-http-response-jq ^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/recAlbumInfo(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") then if (.data.durationBalance | type) == "number" then if .data.durationBalance >= 0 and .data.durationBalance < 86400 and (.data.durationBalance | floor) == .data.durationBalance then .data.durationBalance = 86400 else . end else . end else . end'
+ximalaya-ads = type=http-response,pattern=^https?:\/\/(adse\.(wsa\.)?ximalaya\.com(?::(?:80|443))?\/(ting\/loading(\/ts-\d+)?|adx\/ad)|(mobile|mobilehera|mobwsa)\.ximalaya\.com(?::(?:80|443))?\/discovery-feed\/v4\/mix(\/ts-\d+)?)(\?[^#]*)?$,requires-body=1,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_ads.js?v=20260930-5
+ximalaya-httpdns-sdk-request = type=http-request,pattern=^https:\/\/gslb(tx|ali)\.ximalaya\.com(?::443)?\/linkeye-cloud\/httpdns\/v3\/init\/\d+(\?[^#]*)?$,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_httpdns.js?v=20260930-5
+ximalaya-httpdns-sdk-response = type=http-response,pattern=^https:\/\/gslb(tx|ali)\.ximalaya\.com(?::443)?\/linkeye-cloud\/httpdns\/v3\/init\/\d+(\?[^#]*)?$,requires-body=1,max-size=1048576,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_httpdns.js?v=20260930-5
+ximalaya-decrease-request = type=http-request,pattern=^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/decreaseDuration(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-2
+ximalaya-sync-listen-request = type=http-request,pattern=^https?:\/\/ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-2
+ximalaya-free-listen = type=http-response,pattern=^https?:\/\/(adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(currentDuration|decreaseDuration|rewardDuration|recAlbumInfo)|ad-incentive\.ximalaya\.com\/incentive-sync\/ting\/welfare\/syncListenTime)(\/ts-\d+)?(\?[^#]*)?$,requires-body=1,max-size=1048576,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_vip.js?v=20260930-2
 
 [MITM]
 hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, ad-incentive.ximalaya.com, mobile.ximalaya.com, mobilehera.ximalaya.com, mobwsa.ximalaya.com, gslbtx.ximalaya.com, gslbali.ximalaya.com

@@ -16,7 +16,7 @@ for(const name of ['Ximalaya','XimalayaShadowrocket']) {
  for(const url of ['https://adse.ximalaya.com/ting/loading/ts-123','https://adse.wsa.ximalaya.com/adx/ad','https://mobile.ximalaya.com/discovery-feed/v4/mix/ts-123']) assert(pattern.test(url));
  for(const p of ['/adx/init','/incentive/ting/currentDuration','/incentive/ting/rewardDuration']) assert(!pattern.test('https://adse.ximalaya.com'+p));
 }
-const script=fs.readFileSync(require.resolve('../js/ximalaya_httpdns.js'),'utf8');
-assert(!/CryptoJS|signingKey|MD5|AES|HTTPDNS_SWITCH/.test(script));
-assert(script.length<5000);
-console.log('PASS: narrow module routes and crypto-free client');
+const source=fs.readFileSync(require.resolve('../js/ximalaya_httpdns.js'),'utf8');
+assert(!/uu\.t-wk\.com|\$httpClient|\$persistentStore/.test(source));
+assert.equal(fs.readFileSync(require.resolve('../Ximalaya.module'),'utf8'),fs.readFileSync(require.resolve('../XimalayaShadowrocket.module'),'utf8'));
+console.log('PASS: local-only HTTPDNS and identical cross-client module aliases');

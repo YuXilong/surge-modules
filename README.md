@@ -26,16 +26,10 @@ https://raw.githubusercontent.com/YuXilong/surge-modules/main/Caiyun.module
 https://raw.githubusercontent.com/YuXilong/surge-modules/main/Weibo.module
 ```
 
-### 喜马拉雅 · Surge
+### 喜马拉雅无限畅听（Surge / Shadowrocket）
 
 ```text
 https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module
-```
-
-### 喜马拉雅 · Shadowrocket
-
-```text
-https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module
 ```
 
 ### 京东历史价格
@@ -47,7 +41,7 @@ https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.modul
 ## 使用
 
 - 启用 HTTPS 解密，并安装、完全信任 MITM 证书；Surge macOS 开启增强模式。
-- 喜马拉雅按客户端选择一个版本，更新模块和脚本缓存后冷启动 App 两次。配置密文由自有服务 `uu.t-wk.com` 处理，广告过滤在本地完成。
+- 喜马拉雅统一使用同一模块，配置处理与广告过滤均在本地完成。更新模块和脚本缓存后冷启动 App 两次；旧 Shadowrocket 地址仍可更新，两个地址只需安装一个。
 - 京东比价显示在商品详情页，价格数据来自比价接口。
 
 [MIT 许可](LICENSE) · [脚本版权说明](js/NOTICE.md)
