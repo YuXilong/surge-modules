@@ -15,6 +15,7 @@ for (const name of modules) {
   for (const line of text.split('\n')) {
     if (line.startsWith('[')) section = line;
     if (!line.trim() || line.startsWith('#')) continue;
+    if (section === '[Script]' && !line.startsWith('[')) assert(line.includes('script-path='), `${name}: missing script-path: ${line.split('=')[0]}`);
     for (const match of line.matchAll(/(script-path=|data=")(https?:\/\/[^\s,"]+)/g)) {
       assert(match[2].startsWith(prefix), `${name}: external dependency ${match[2]}`);
       const [revision, ...parts] = match[2].slice(prefix.length).split('?')[0].split('/');
