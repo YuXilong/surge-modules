@@ -89,10 +89,22 @@ function handleWareBusiness() {
     let floors = body.floors;
     if (!Array.isArray(floors)) { $.log('历史价格：响应缺少 floors'); return $.done(); }
     const commodity_info = floors.find(floor => floor?.data?.wareInfo?.skuId);
-    const skuId = commodity_info?.data?.wareInfo?.skuId;
+    const wareInfo = body.commonBaseInfo?.data?.wareInfo;
+    const skuId = wareInfo?.skuId || commodity_info?.data?.wareInfo?.skuId;
     if (!skuId || !/^\d+$/.test(String(skuId))) { $.log('历史价格：未找到商品编号'); return $.done(); }
     $.log("skuId:" + skuId);
     handleRequest(skuId, "JD", text => {
+        if (typeof wareInfo?.name === 'string' && floors.some(floor => floor?.mId === 'bpName')) {
+            const summary = text.split('\n')
+                .filter(line => /^历史价格[:：]|^(当前价|最低价)\s/.test(line))
+                .map(line => line.trim().replace(/\s+/g, ' ')).join('；');
+            const label = summary.startsWith('历史价格') ? summary : '历史价格：' + summary;
+            wareInfo.name = label + '\n' + wareInfo.name;
+            if (typeof wareInfo.shortTitle === 'string') wareInfo.shortTitle = label + '\n' + wareInfo.shortTitle;
+            wareInfo.forceExpandTitle = true;
+            $.log('[京东比价] v20260930-1 已写入商品标题，状态：' + (text.startsWith('历史价格\n') ? '有价格记录' : text));
+            return $.done({ body: JSON.stringify(body) });
+        }
         const obj = {
             "bId": "eCustom_flo_199",
             "cf": {
