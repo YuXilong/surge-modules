@@ -22,7 +22,7 @@ if (/\/v\d+\/(user|user_detail|vip_info)\/?$/.test(url)) {
   const expiry = 4092599349;
   const update = info => {
     info.show_upcoming_renewal = false;
-    for (const key of ['vip', 'svip']) info[key] = { ...(object(info[key]) ? info[key] : {}), expires_time: expiry, is_auto_renewal: true };
+    for (const key of ['vip', 'svip']) info[key] = { ...(object(info[key]) ? info[key] : {}), expires_time: String(expiry), is_auto_renewal: true };
   };
   if (/\/user\/?$/.test(url)) {
     if (!object(body.result)) return $done({});
@@ -37,7 +37,7 @@ if (/\/v\d+\/(user|user_detail|vip_info)\/?$/.test(url)) {
     if (!('vip' in body) && !('svip' in body)) return $done({});
     update(body);
   }
-  console.log('彩云天气：已处理 ' + url.split('/').filter(Boolean).pop());
+  console.log('彩云天气 v20260930-1：已处理 ' + url.split('/').filter(Boolean).pop());
   return $done({ body: JSON.stringify(body) });
 }
 

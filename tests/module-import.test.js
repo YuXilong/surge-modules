@@ -81,17 +81,25 @@ async function run(file, url, body, get) {
   for (const endpoint of ['user_detail', 'vip_info']) {
     assert(matches('Caiyun', 'https://biz.cyapi.cn/api/v1/' + endpoint));
   }
+  assert(matches('Caiyun', 'https://biz.cyapi.cn/p/v1/vip_info?app_name=weather'));
+  assert(matches('Caiyun', 'https://starplucker.cyapi.cn/api/v1/user_detail/?app_name=weather'));
+  assert(!matches('Caiyun', 'https://wrapper.cyapi.cn/v1/activity?app_name=weather'));
+  assert(!matches('Caiyun', 'https://biz.cyapi.cn/v2/user/logout'));
 
   const caiyun = 'js/vendor/ddgksf2013/caiyun_json.js';
   const userUrl = 'https://biz.caiyunapp.com/v2/user?app_name=weather';
   assert.equal(JSON.parse((await run(caiyun, userUrl, { result: { wt: { vip: {} } } })).body).result.is_vip, 1);
+  assert.equal(typeof JSON.parse((await run(caiyun, userUrl, { result: { wt: { vip: {} } } })).body).result.svip_expired_at, 'number');
   assert.deepEqual(await run(caiyun, userUrl, 'invalid json'), {});
   assert.equal(JSON.parse((await run(caiyun, userUrl, { result: { name: 'keep' } })).body).result.wt.vip.enabled, true);
   const detail = JSON.parse((await run(caiyun, 'https://biz.cyapi.cn/api/v1/user_detail', { vip_info: { vip: { keep: true } } })).body);
   assert(detail.vip_info.svip.expires_time > Date.now() / 1000);
+  assert.equal(typeof detail.vip_info.svip.expires_time, 'string', 'iOS user_detail parser requires a Swift String');
+  assert.equal(typeof detail.vip_info.vip.expires_time, 'string');
   assert.equal(detail.vip_info.vip.keep, true);
   const vip = JSON.parse((await run(caiyun, 'https://wrapper.cyapi.cn/api/v1/vip_info', { svip: null })).body);
   assert(vip.svip.expires_time > Date.now() / 1000);
+  assert.equal(typeof vip.svip.expires_time, 'string');
   assert.deepEqual(await run(caiyun, userUrl, { status: 'error', result: null }), {});
 
   const price = 'js/vendor/deezertidal/jdprice.js';
