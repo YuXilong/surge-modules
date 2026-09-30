@@ -20,3 +20,10 @@ const source=fs.readFileSync(require.resolve('../js/ximalaya_httpdns.js'),'utf8'
 assert(!/uu\.t-wk\.com|\$httpClient|\$persistentStore/.test(source));
 assert.equal(fs.readFileSync(require.resolve('../Ximalaya.module'),'utf8'),fs.readFileSync(require.resolve('../XimalayaShadowrocket.module'),'utf8'));
 console.log('PASS: local-only HTTPDNS and identical cross-client module aliases');
+
+for (const name of ['Ximalaya','XimalayaShadowrocket']) {
+  const text=fs.readFileSync(require.resolve('../'+name+'.module'),'utf8');
+  const paths=[...text.matchAll(/script-path=(\S+)/g)].map(m=>m[1]);
+  assert(paths.length>0);
+  for(const path of paths) assert(/^https:\/\/raw\.githubusercontent\.com\/YuXilong\/surge-modules\/[a-f0-9]{40}\/js\//.test(path),'Ximalaya scripts must use an immutable revision');
+}

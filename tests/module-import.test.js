@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
-const prefix = 'https://raw.githubusercontent.com/YuXilong/surge-modules/main/';
+const prefix = 'https://raw.githubusercontent.com/YuXilong/surge-modules/';
 const modules = ['AdUltraPlus', 'Caiyun', 'Weibo', 'Ximalaya', 'XimalayaShadowrocket', 'HistoryPrice'];
 const scripts = new Set();
 const blockers = [];
@@ -17,7 +17,9 @@ for (const name of modules) {
     if (!line.trim() || line.startsWith('#')) continue;
     for (const match of line.matchAll(/(script-path=|data=")(https?:\/\/[^\s,"]+)/g)) {
       assert(match[2].startsWith(prefix), `${name}: external dependency ${match[2]}`);
-      const file = path.join(root, match[2].slice(prefix.length).split('?')[0]);
+      const [revision, ...parts] = match[2].slice(prefix.length).split('?')[0].split('/');
+      assert(revision === 'main' || /^[a-f0-9]{40}$/.test(revision), 'unexpected script revision');
+      const file = path.join(root, ...parts);
       assert(fs.statSync(file).size > 0, file);
       if (match[1] === 'script-path=') scripts.add(file);
     }
