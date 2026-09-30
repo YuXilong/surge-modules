@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const moduleText = fs.readFileSync(require.resolve('../Weibo.module'), 'utf8');
-const source = fs.readFileSync(require.resolve('../js/vendor/zmqcherish/weibo_main.js'), 'utf8');
+const source = fs.readFileSync(require.resolve('../js/weibo_main.js'), 'utf8');
 const pattern = new RegExp(moduleText.split('\n').find(line => line.startsWith('微博去广告=')).match(/pattern=(.*?),requires-body/)[1]);
 function rewrite(path, body) {
   const url = 'https://api.weibo.cn/2/' + path;
@@ -25,7 +25,7 @@ for (const path of ['statuses/container_timeline?count=20', 'statuses/container_
 assert.deepEqual(rewrite('statuses/repost_timeline?count=20', {reposts: [organic.data, ad.data]}), {reposts: [organic.data]});
 assert.deepEqual(rewrite('statuses/friends/timeline?count=20', {statuses: [organic.data, ad.data]}), {statuses: [organic.data]});
 console.log('PASS: Weibo module routes supported feeds through ad removal and preserves normal posts/cursors');
-const launchSource = fs.readFileSync(require.resolve('../js/vendor/zmqcherish/weibo_launch.js'), 'utf8');
+const launchSource = fs.readFileSync(require.resolve('../js/weibo_launch.js'), 'utf8');
 const launchPattern = new RegExp(moduleText.split('\n').find(line => line.startsWith('微博去广告1=')).match(/pattern=(.*?),requires-body/)[1]);
 function launch(url, body) {
   const original = typeof body === 'string' ? body : JSON.stringify(body);
