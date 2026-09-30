@@ -1,103 +1,53 @@
 # Surge Modules
 
-Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库；安装前需启用并信任 MITM 证书。
+在客户端中选择「从 URL 安装」，复制对应地址。代码块右上角可一键复制。
 
-## 模块安装
-
-在 Surge → 模块 → 从 URL 安装中填入对应地址：
-
-| 模块 | 安装地址 | 功能 |
-| --- | --- | --- |
-| Spotify | [Spotify.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module) | 部分账户属性改写与去广告 |
-| 通用去广告 | [AdUltraPlus.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/AdUltraPlus.module) | 启动页、信息流等广告拦截 |
-| 彩云天气 | [Caiyun.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Caiyun.module) | 本地会员字段改写与广告拦截 |
-| 微博 | [Weibo.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Weibo.module) | 开屏、信息流广告与推广清理 |
-| 喜马拉雅 | [Ximalaya.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module) | 免费听余额改写、开屏与首页广告过滤 |
-| 历史价格 | [HistoryPrice.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module) | 京东商品页比价 |
-
-- 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；微博去广告请启用独立模块。
-- 喜马拉雅通过两个配置域名关闭 SDK HTTPDNS，让请求恢复使用域名；将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将 `currentDuration`、`decreaseDuration`、`rewardDuration`、`syncListenTime` 成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
-- 历史价格仅覆盖京东，向 `browser.bijiago.com` 发送商品链接查询价格；无外部脚本更新检查。
-- 新增模块尚未真机验证，彩云会员字段改写不保证服务端会员能力。提交并推送到 `main` 后，远程安装地址才能加载新增文件。
-
-## Shadowrocket 更新与排错
-
-Shadowrocket 使用 [XimalayaShadowrocket.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module)，与 Surge 版二选一；时长改写使用内置 jq，广告过滤与配置处理流程一致。
-
-喜马拉雅仅针对两个 gslb 配置域名处理 HTTPDNS，不解密所有 IP。配置密文发往自有服务 `https://uu.t-wk.com/v1/ximalaya/httpdns-config`，不上传原始 URL、请求头、Cookie 或设备标识。相同配置在本地缓存一天；服务超时或限流时原样放行，此次关闭 HTTPDNS 可能不生效。公开脚本不包含配置加解密实现。
-
-去广告覆盖开屏、首页广告卡片和已确认的普通 ADX 广告位；保留普通推荐、未知广告位、初始化接口与激励广告。广告过滤在本地完成，新增过滤仍需真机确认缓存和页面表现。
-
-更新模块及脚本缓存后，确认 HTTPS 解密已启用、证书完全信任，再冷启动 App 两次，每次停留约 15 秒。日志出现「配置已处理」表示服务响应或缓存已应用；后续 `replaceConfig`、`currentDuration` 使用域名才表示客户端采用配置。停用模块后，上游配置可能重新开启 HTTPDNS。
-
-模块将广告与时长共用域名设为直连。若其他规则仍对这些域名或两个 gslb 配置域名执行 `REJECT`，需移除冲突规则。Shadowrocket 全局路由使用「配置」。
-
-本地验证：`node tests/ximalaya-httpdns.test.js`、`node tests/ximalaya-httpdns-sdk.test.js`、`node tests/ximalaya-ads.test.js`、`node tests/ximalaya-vip.test.js`、`node tests/ximalaya-body-rewrite.test.js`（需要 jq）。
-
-更新模块后重新连接，并彻底退出再打开京东、彩云天气。当前配置需要开启 HTTPS 解密，且证书已安装并完全信任。
-
-在「数据 → 代理」开启日志，复现后检查 `api.m.jd.com`、`cyapi.cn`、`caiyunapp.com` 的记录是否标记 `MITM`。
-京东比价服务若要求验证，商品页会显示原因；该状态下无法获取历史价格。彩云模块改写本地会员展示，不保证服务器授权功能。
-
-## Spotify 安装
-
-在 Surge → 模块 → 从 URL 安装中填入：
+### Spotify
 
 ```text
 https://raw.githubusercontent.com/YuXilong/surge-modules/main/Spotify.module
 ```
 
-启用模块，并安装、信任 Surge MITM 证书。macOS 还需开启 **增强模式（Enhanced Mode）**。
+### 通用去广告
 
-Spotify 脚本保存在本仓库，通过 jsDelivr 加载。若无法访问，可将模块中的
-`fastly.jsdelivr.net/gh/YuXilong/surge-modules@main` 替换为
-`raw.githubusercontent.com/YuXilong/surge-modules/main`。
-
-## macOS 首次使用
-
-桌面端可能缓存旧的账户状态。在本仓库目录执行：
-
-```bash
-./scripts/reset-spotify-mac-state.sh --dry-run  # 预览
-./scripts/reset-spotify-mac-state.sh            # 确认后退出 Spotify 并清理缓存
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/AdUltraPlus.module
 ```
 
-脚本会尝试将 `offline.bnk`、`ad-state-storage.bnk`、`public.ldb` 备份至
-`~/Library/Application Support/Spotify/.surge-module-backup/<时间戳>/` 后删除，并清空 HTTP 缓存。
-**当前脚本未强制检查备份成功，重要数据请先自行备份；HTTP 缓存不备份。**
-`offline.bnk` 包含离线歌曲索引，清理后需要重新同步离线内容。
+### 彩云天气
 
-重新打开 Spotify，若仍显示免费版，退出登录后重新登录。macOS 可检查 Surge 脚本日志是否出现
-`customize`；移动端还可能出现 `bootstrap`。未生效时依次检查增强模式、MITM 证书、缓存和登录状态。
-
-## 功能与限制
-
-- 改写 UCS 账户属性，部分解锁 Premium，并拦截部分 Spotify 广告与归因域名。
-- 原 README 记录了 macOS Spotify **1.3.1.234** 的账户属性改写结果（`type=premium`、`ads=0`）；实际播放不再插播广告尚未验证，也不代表后续版本均有效。
-- 不保证超高音质、离线下载等服务端能力；接口变化或证书固定可能导致模块失效。
-- 第三方广告网络与遥测拦截默认关闭，可在模块中按需启用。
-
-## 文件与维护
-
-| 文件 | 用途 |
-| --- | --- |
-| [Spotify.module](Spotify.module) | 模块配置及 macOS 适配说明 |
-| [js/](js/) | 模块配套脚本（含 js/vendor/） |
-| [js/NOTICE.md](js/NOTICE.md) | 脚本来源、版本、校验值与更新说明 |
-| [scripts/reset-spotify-mac-state.sh](scripts/reset-spotify-mac-state.sh) | macOS 状态缓存清理 |
-| [scripts/update-upstream-scripts.sh](scripts/update-upstream-scripts.sh) | 上游脚本对比与更新 |
-
-```bash
-./scripts/update-upstream-scripts.sh          # 仅拉取并对比
-./scripts/update-upstream-scripts.sh --write  # 复核后更新本地脚本
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/Caiyun.module
 ```
 
-更新后同步维护 `js/NOTICE.md` 中的版本与校验值。
+### 微博
 
-## 来源与许可
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/Weibo.module
+```
 
-本仓库配置及自有脚本采用 [MIT](LICENSE) 许可。Spotify 脚本来自
-[app2smile/rules](https://github.com/app2smile/rules)，保留其 [MIT 版权声明](js/LICENSE-app2smile.md)；
-其他脚本保留各自文件内的版权声明。
+### 喜马拉雅 · Surge
 
-仅供网络调试与个人学习使用，请遵守相关服务条款及法律法规。
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/Ximalaya.module
+```
+
+### 喜马拉雅 · Shadowrocket
+
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module
+```
+
+### 京东历史价格
+
+```text
+https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module
+```
+
+## 使用
+
+- 启用 HTTPS 解密，并安装、完全信任 MITM 证书；Surge macOS 开启增强模式。
+- 喜马拉雅按客户端选择一个版本，更新模块和脚本缓存后冷启动 App 两次。配置密文由自有服务 `uu.t-wk.com` 处理，广告过滤在本地完成。
+- 京东比价显示在商品详情页，价格数据来自比价接口。
+
+[MIT 许可](LICENSE) · [脚本版权说明](js/NOTICE.md)
