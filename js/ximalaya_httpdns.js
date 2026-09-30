@@ -1,3 +1,4 @@
+console.log("[喜马拉雅HTTPDNS] v20260930-6 入口：" + (typeof $response === "undefined" ? "请求" : "响应"));
 /*
  * CryptoJS 4.1.1, bundled from the existing repository scripts.
  * Copyright (c) 2009-2013 Jeff Mott
@@ -26,38 +27,52 @@ const dnsCrypto = (() => {
   return module.exports;
 })();
 // SDK 配置始终先按两个域名匹配，不需要解密任意 IP。
+function skipSDK(reason) {
+  console.log("[喜马拉雅HTTPDNS] 跳过：" + reason);
+  return {};
+}
+
 function rewriteSDK() {
   const match = /^https:\/\/(gslbtx|gslbali)\.ximalaya\.com(?::443)?\/linkeye-cloud\/httpdns\/v3\/init\/(\d+)(?:\?[^#]*)?$/.exec($request.url);
-  if (!match || ($request.method && $request.method !== "GET")) return {};
+  if (!match) return skipSDK("运行时 URL 未匹配");
+  if ($request.method && $request.method !== "GET") return skipSDK("请求方法=" + $request.method);
   if (typeof $response === "undefined") {
     // 强制完整配置，避免业务 304 继续使用旧的 IP 配置；其他参数原样保留。
     const versions = $request.url.match(/[?&]version=[^&#]*/g) || [];
-    if (versions.length !== 1 || versions[0].endsWith("=0e")) return {};
+    if (versions.length !== 1) return skipSDK("version 参数数量=" + versions.length);
+    if (versions[0].endsWith("=0e")) return skipSDK("请求已经使用完整配置版本");
+    console.log("[喜马拉雅HTTPDNS] 请求完整配置 version=0e");
     return {url: $request.url.replace(/([?&]version=)[^&#]*/, "$10e")};
   }
   const status = $response.status == null ? $response.statusCode : $response.status;
   const statusLine = /^HTTP\/\d(?:\.\d)?\s+(\d{3})(?:\s|$)/.exec(String(status));
-  if (Number(statusLine ? statusLine[1] : status) !== 200 || typeof $response.body !== "string") return {};
+  console.log("[喜马拉雅HTTPDNS] HTTP=" + String(status) + " body=" + typeof $response.body + "/" + (($response.body || "").length || 0));
+  if (Number(statusLine ? statusLine[1] : status) !== 200 || typeof $response.body !== "string") return skipSDK("HTTP 状态或正文类型");
   const payload = JSON.parse($response.body);
-  if (!payload || payload.rtn_code !== "200" || payload.timestamp !== match[2] || typeof payload.rtn_data !== "string") return {};
+  if (!payload) return skipSDK("空配置");
+  if (payload.rtn_code !== "200") return skipSDK("业务码=" + String(payload.rtn_code).slice(0, 8));
+  if (payload.timestamp !== match[2]) return skipSDK("响应时间戳不匹配");
+  if (typeof payload.rtn_data !== "string") return skipSDK("密文字段类型");
   const encoded = payload.rtn_data.replace(/\s/g, "");
-  if (!encoded || encoded.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return {};
+  if (!encoded || encoded.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return skipSDK("密文编码");
   const encrypted = dnsCrypto.enc.Base64.parse(encoded);
-  if (!encrypted.sigBytes || encrypted.sigBytes % 16) return {};
+  if (!encrypted.sigBytes || encrypted.sigBytes % 16) return skipSDK("密文长度");
   // 客户端协议常量；不包含用户凭据或证书。
   const key = dnsCrypto.enc.Utf8.parse("8c551bee2bfc37b3");
   const clear = dnsCrypto.AES.decrypt({ciphertext: encrypted}, key, {mode:dnsCrypto.mode.ECB, padding:dnsCrypto.pad.NoPadding});
   const byteAt = i => (clear.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 255;
   const padding = byteAt(clear.sigBytes - 1);
-  if (padding < 1 || padding > 16) return {};
-  for (let i = clear.sigBytes - padding; i < clear.sigBytes; i++) if (byteAt(i) !== padding) return {};
+  if (padding < 1 || padding > 16) return skipSDK("填充长度");
+  for (let i = clear.sigBytes - padding; i < clear.sigBytes; i++) if (byteAt(i) !== padding) return skipSDK("填充内容");
   clear.sigBytes -= padding;
   clear.clamp();
   const config = JSON.parse(dnsCrypto.enc.Utf8.stringify(clear));
-  if (!config || Array.isArray(config) || config.HTTPDNS_SWITCH !== "1") return {};
+  if (!config || Array.isArray(config)) return skipSDK("配置结构");
+  if (config.HTTPDNS_SWITCH === "0") return skipSDK("HTTPDNS 已关闭");
+  if (config.HTTPDNS_SWITCH !== "1") return skipSDK("开关类型");
   config.HTTPDNS_SWITCH = "0";
   payload.rtn_data = dnsCrypto.AES.encrypt(JSON.stringify(config), key, {mode:dnsCrypto.mode.ECB, padding:dnsCrypto.pad.Pkcs7}).ciphertext.toString(dnsCrypto.enc.Base64);
-  console.log("[喜马拉雅HTTPDNS] v20260930-5 SDK HTTPDNS_SWITCH: 1 -> 0；配置已重新加密");
+  console.log("[喜马拉雅HTTPDNS] v20260930-6 SDK HTTPDNS_SWITCH: 1 -> 0；配置已重新加密");
   return {body:JSON.stringify(payload)};
 }
 

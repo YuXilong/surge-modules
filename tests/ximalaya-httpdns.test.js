@@ -44,7 +44,7 @@ for (const name of ['Ximalaya','XimalayaShadowrocket']) {
   const text=fs.readFileSync(require.resolve(`../${name}.module`),'utf8');
   for (const phase of ['request','response']) {
     const line=text.split('\n').find(l=>l.startsWith(`ximalaya-httpdns-sdk-${phase} =`));
-    assert(line && line.includes(`type=http-${phase}`) && line.includes('/js/ximalaya_httpdns.js?v=20260930-5'));
+    assert(line && line.includes(`type=http-${phase}`) && line.includes('/js/ximalaya_httpdns.js?v=20260930-6'));
     const pattern=new RegExp(line.match(/pattern=(.*?),(?:requires-body|timeout)/)[1]);
     for (const host of ['gslbtx.ximalaya.com','gslbali.ximalaya.com']) assert(pattern.test(`https://${host}/linkeye-cloud/httpdns/v3/init/123?version=2572e`));
     assert(!pattern.test('https://203.0.113.1/linkeye-cloud/httpdns/v3/init/123'));
@@ -53,3 +53,9 @@ for (const name of ['Ximalaya','XimalayaShadowrocket']) {
   for (const host of ['gslbtx.ximalaya.com','gslbali.ximalaya.com']) assert(mitm.includes(host));
   assert(!mitm.includes('<ip-address>'));
 }
+
+const logs=[];
+vm.runInNewContext(script, {$request:{url:'https://gslbtx.ximalaya.com/linkeye-cloud/httpdns/v3/init/123',method:'GET'},$response:{status:200,body:JSON.stringify({rtn_code:'304',timestamp:'123'})},$done(){},console:{log:message=>logs.push(message)}},{timeout:3000});
+assert(logs.some(line=>line.includes('v20260930-6')&&line.includes('入口')));
+assert(logs.some(line=>line.includes('业务码=304')));
+console.log('PASS: script entry and skipped config remain observable');
