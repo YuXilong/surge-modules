@@ -51,7 +51,7 @@ for (const url of [
 ]) assert(!blockers.some(regex => regex.test(url)), `blocked Ximalaya endpoint: ${url}`);
 assert(blockers.some(regex => regex.test('https://ads.example.test/api/v1/adRealTime')));
 const ximalayaModule = fs.readFileSync(path.join(root, 'Ximalaya.module'), 'utf8');
-assert(!ximalayaModule.includes('[URL Rewrite]'));
+assert(!ximalayaModule.includes('ximalaya-httpdns-sdk-request ='));
 assert(!ximalayaModule.includes('/js/vendor/ddgksf2013/ximalaya_json.js'));
 
 async function run(file, url, body, get) {

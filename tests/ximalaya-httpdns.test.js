@@ -42,7 +42,7 @@ for (const url of ['https://203.0.113.1/linkeye-cloud/httpdns/v3/init/123?versio
 console.log('PASS: domain-only SDK config, AES against Node crypto, complete config preservation, timestamp and failure passthrough');
 for (const name of ['Ximalaya','XimalayaShadowrocket']) {
   const text=fs.readFileSync(require.resolve(`../${name}.module`),'utf8');
-  for (const phase of ['request','response']) {
+  for (const phase of ['response']) {
     const line=text.split('\n').find(l=>l.startsWith(`ximalaya-httpdns-sdk-${phase} =`));
     assert(line && line.includes(`type=http-${phase}`) && line.includes('/js/ximalaya_httpdns.js?v=20260930-6'));
     const pattern=new RegExp(line.match(/pattern=(.*?),(?:requires-body|timeout)/)[1]);
