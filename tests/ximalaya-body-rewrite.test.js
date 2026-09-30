@@ -5,7 +5,7 @@ const { execFileSync } = require('node:child_process');
 const text = fs.readFileSync(require.resolve('../XimalayaShadowrocket.module'), 'utf8');
 const rules = text.split('\n').filter(line => line.startsWith('http-response-jq '));
 assert.equal(rules.length, 2);
-assert(!text.includes('[Script]'));
+assert(text.includes('/js/ximalaya_httpdns.js'), 'HTTPDNS needs a script to recompute the config signature');
 for (const [index, line] of rules.entries()) {
   const match = /^http-response-jq (\S+) '(.*)'$/.exec(line);
   assert(match);

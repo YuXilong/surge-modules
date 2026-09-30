@@ -16,19 +16,25 @@ Surge 模块与配套脚本。脚本和拦截响应文件均保存在本仓库�
 | 历史价格 | [HistoryPrice.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/HistoryPrice.module) | 京东商品页比价 |
 
 - 通用去广告已移除喜马拉雅规则和微博普通版响应脚本；微博去广告请启用独立模块。
-- 喜马拉雅将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将 `currentDuration`、`decreaseDuration`、`rewardDuration`、`syncListenTime` 成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
+- 喜马拉雅关闭 HTTPDNS 并重算配置签名，让请求恢复使用域名；将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0`，保留 `localDuration` 等其他请求字段；将 `currentDuration`、`decreaseDuration`、`rewardDuration`、`syncListenTime` 成功响应的 `balance` 与页面 `recAlbumInfo` 的 `durationBalance` 提高到至少 86400 秒。
 - 历史价格仅覆盖京东，向 `browser.bijiago.com` 发送商品链接查询价格；无外部脚本更新检查。
 - 新增模块尚未真机验证，彩云会员字段改写不保证服务端会员能力。提交并推送到 `main` 后，远程安装地址才能加载新增文件。
 
 ## Shadowrocket 更新与排错
 
-[Shadowrocket 原生测试版](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module) 使用内置 jq 将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0` 并改写免费听数字余额，不加载 JavaScript、不包含去广告。与脚本版二选一启用，更新后重新连接并重开 App。测试命令：`node tests/ximalaya-body-rewrite.test.js`（需要 jq）。
+Shadowrocket 可安装 [XimalayaShadowrocket.module](https://raw.githubusercontent.com/YuXilong/surge-modules/main/XimalayaShadowrocket.module)，与原喜马拉雅模块二选一。此版使用仓库内脚本关闭 HTTPDNS、重算签名，使用内置 jq 将 `decreaseDuration` / `syncListenTime` 的 JSON 请求字段 `duration` 设为 `0` 并改写数字余额，不包含去广告。
 
 喜马拉雅模块将 `adse.ximalaya.com` 设为直连，以免基础配置的整域广告拦截阻断时长和奖励接口。若其他模块仍命中该域名的 `REJECT`，需调整模块优先级或移除冲突规则。全局路由使用「配置」。
 
-模块覆盖 `adse.ximalaya.com`、`adse.wsa.ximalaya.com` 和 `ad-incentive.ximalaya.com`，均需启用 MITM 解密。
+喜马拉雅会通过 HTTPDNS 将域名换成动态 IP，且可能不携带 TLS SNI；此时只配置域名 MITM 看不到接口。两个模块均处理 `/abtest-portal/sync/<时间戳>`，校验原签名后关闭 `ios&dnsEffectEnable` 并重算签名。脚本日志出现「已关闭 HTTPDNS，配置签名已更新」后，彻底退出 App 再冷启动，让新配置生效。`adse.ximalaya.com`、`adse.wsa.ximalaya.com` 和 `ad-incentive.ximalaya.com` 均已覆盖。
+
+**首次请求仍走 IP 时**，需要先让配置接口被解密，正文脚本无法跨过这一步。Surge 可临时在 MITM `hostname` 加入 `<ip-address>`（检查前面没有排除 IP 的条目），收到上述日志后冷启动，确认目标请求恢复域名和 SNI，再移除该临时项。它会扩大解密范围，可能影响其他 App；本模块不默认开启，也不修改证书校验选项。若该 IP 路径仍有 TLS 错误，或使用 Shadowrocket，可先通过已经验证能解密 IP 的诊断代理完成这次初始化。已完成初始化的设备直接更新模块即可。
+
+关闭开关并重算签名的方案已用真机抓包验证；仓库 JavaScript 另用原始响应校验，仍需在各代理客户端确认实际加载和执行。不要只改开关而保留旧签名，客户端会丢弃配置。停用模块后服务器后续配置可能重新开启 HTTPDNS。
 
 更新喜马拉雅模块后，重新连接并退出、重开 App，再进入免费听页面刷新时长。脚本日志出现「请求 duration -> 0」表示请求字段已改写；「本地 balance」或「本地 durationBalance」表示响应余额已改写；仅看到页面剩余分钟数不足以判断生效。
+
+本地验证：`node tests/ximalaya-httpdns.test.js`、`node tests/ximalaya-vip.test.js`、`node tests/ximalaya-body-rewrite.test.js`（最后一项需要 jq）。
 
 更新模块后重新连接，并彻底退出再打开京东、彩云天气。当前配置需要开启 HTTPS 解密，且证书已安装并完全信任。
 

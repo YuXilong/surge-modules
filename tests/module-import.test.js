@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const prefix = 'https://raw.githubusercontent.com/YuXilong/surge-modules/main/';
-const modules = ['AdUltraPlus', 'Caiyun', 'Weibo', 'Ximalaya', 'HistoryPrice'];
+const modules = ['AdUltraPlus', 'Caiyun', 'Weibo', 'Ximalaya', 'XimalayaShadowrocket', 'HistoryPrice'];
 const scripts = new Set();
 const blockers = [];
 for (const name of modules) {

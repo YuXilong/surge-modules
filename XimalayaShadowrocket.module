@@ -1,5 +1,5 @@
-#!name=喜马拉雅免费听（Shadowrocket 原生测试版）
-#!desc=使用原生正文改写将 decreaseDuration / syncListenTime 的 JSON 请求字段 duration 设为 0，并提高免费听本地余额到 86400 秒。
+#!name=喜马拉雅免费听（Shadowrocket）
+#!desc=关闭 HTTPDNS 并更新配置签名，恢复域名请求；使用原生正文改写将 decreaseDuration / syncListenTime 的 JSON 请求字段 duration 设为 0，并提高免费听本地余额到 86400 秒。 首次仍走 IP 时需先初始化，见 README。
 #!author=yuxilong
 
 # 同时覆盖主域名与加速域名。
@@ -7,6 +7,9 @@
 DOMAIN,adse.ximalaya.com,DIRECT
 DOMAIN,adse.wsa.ximalaya.com,DIRECT
 DOMAIN,ad-incentive.ximalaya.com,DIRECT
+
+[Script]
+ximalaya-httpdns = type=http-response,pattern=^https?:\/\/[^\/]+\/abtest-portal\/sync\/\d+(\?[^#]*)?$,requires-body=1,max-size=1048576,timeout=10,script-path=https://raw.githubusercontent.com/YuXilong/surge-modules/main/js/ximalaya_httpdns.js?v=20260930-1
 
 [Body Rewrite]
 # 请求字段与响应中的 data.duration 不同；缺少 duration 的请求原样放行。
@@ -16,4 +19,4 @@ http-response-jq ^https?:\/\/(adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/(cur
 http-response-jq ^https?:\/\/adse\.(wsa\.)?ximalaya\.com\/incentive\/ting\/recAlbumInfo(/ts-\d+)?(\?[^#]*)?$ 'if type != "object" then . elif (.data | type) != "object" then . elif (.ret == 0 or .ret == "0") then if (.data.durationBalance | type) == "number" then if .data.durationBalance >= 0 and .data.durationBalance < 86400 and (.data.durationBalance | floor) == .data.durationBalance then .data.durationBalance = 86400 else . end else . end else . end'
 
 [MITM]
-hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, ad-incentive.ximalaya.com
+hostname = %APPEND% adse.ximalaya.com, adse.wsa.ximalaya.com, ad-incentive.ximalaya.com, mobile.ximalaya.com, mobilehera.ximalaya.com, mobwsa.ximalaya.com
